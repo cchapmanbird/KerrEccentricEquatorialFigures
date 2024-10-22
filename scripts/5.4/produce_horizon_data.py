@@ -47,7 +47,7 @@ from eryn.utils import TransformContainer
 
 from few.waveform import AAKWaveformBase, KerrEccentricEquatorialFlux, FastSchwarzschildEccentricFlux
 from few.trajectory.inspiral import EMRIInspiral
-from few.summation.aakwave import AAKSummation
+from few.summation.aakwave import KerrAAKSummation
 from few.waveform import GenerateEMRIWaveform
 from few.utils.constants import *
 from few.utils.utility import get_p_at_t, get_separatrix
@@ -311,9 +311,9 @@ def generate_data(
                 spin = params_all['spin']
                 e0 = params_all['e0']
                 #x0 = params_all['x0']
-                x0 = np.sign(spin) * 1.0
+                x0 = np.sign(spin) * 1.0 if spin != 0.0 else 1.0
                 spin = np.abs(spin)
-                
+                print("M, q, spin, e0, x0", M, q, spin, e0, x0)
                 mu = q * M
                 if mu < mumin or mu > mumax:
                     z[i] = np.nan
@@ -339,7 +339,7 @@ if __name__ == '__main__':
     grid_keys = args['grids']
 
     inspiral_func_all = dict(zip(['kerr', 'schwarzschild', 'pn5'], ['KerrEccentricEquatorial', 'SchwarzEccFlux', 'pn5']))
-    args_all = dict(zip(['kerr', 'schwarzschild', 'aak'], [[KerrEccentricEquatorialFlux,], [FastSchwarzschildEccentricFlux,], [AAKWaveformBase, EMRIInspiral, AAKSummation]]))
+    args_all = dict(zip(['kerr', 'schwarzschild', 'aak'], [[KerrEccentricEquatorialFlux,], [FastSchwarzschildEccentricFlux,], [AAKWaveformBase, EMRIInspiral, KerrAAKSummation]]))
 
 
     print("generating different " + grid_keys[0] + " lines for " + grid_keys[1] + " grid")
@@ -353,7 +353,7 @@ if __name__ == '__main__':
         fixed_params_all[key] = el
 
     #e0_grid = np.arange(0.15, 0.76, 0.15)
-    e0_grid = [0.1, 0.4, 0.7]
+    e0_grid = [0.1, 0.4, 0.6, 0.75]
     spin_grid = [-0.99, -0.5, 0.0, 0.5, 0.99]
     #np.concatenate((np.arange(0.0, 0.99, 0.1), np.array([0.99])))
     q_grid = [1e-5, 1e-4, 1e-3]

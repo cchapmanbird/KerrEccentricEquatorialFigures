@@ -1,5 +1,5 @@
 # plot horizon data for the Kerr eccentric equatorial case
-# python plot_horizon_data.py -Tobs 4.0 -q 1.0e-5 -spin 0.99 -zaxis e0 -base horizon
+# python plot_horizon_data.py -Tobs 2.0 -q 1.0e-5 -spin 0.99 -zaxis e0 -base horizon
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,13 +27,17 @@ parser.add_argument("-e0", "--e0", type=float, default=5.0e-1, help="initial ecc
 parser.add_argument("-spin", "--spin", type=float, default=9.9e-5, help="spin")
 parser.add_argument("-zaxis", "--zaxis", type=str, default='e0', help="z-axis")
 parser.add_argument("-base", "--base_name", type=str, default='horizon', help="base name of the data file")
+parser.add_argument("-cpal", "--cpal", type=str, default='colorblind', help="color palette")
+parser.add_argument("-ec", "--every_color", type=int, default=1, help="how many colors to skip")
 
 args = vars(parser.parse_args())
 
 # seaborn colorblind palette
-cpal = color_palette("colorblind", as_cmap=True)
+cpal = color_palette(args['cpal'])[::args['every_color']]#, as_cmap=True)
+#cpal = color_palette("dark:#5A9_r")[::2]
 
 datadir = './horizon_data/'
+plotdir = './figures/'
 
 def add_plot(M_detector, data, ls, colors='k', fill=False, interp=None, interp_kwargs={}, plot_kwargs={}, fig=None, axs=None):
     if fig is None or axs is None:
@@ -59,22 +63,19 @@ def add_plot(M_detector, data, ls, colors='k', fill=False, interp=None, interp_k
             y = z_here
 
         if fill:
-            axs.semilogx(x, y, ls=ls, color='k', label=key, **plot_kwargs)
-            axs.fill_between(x, zmin, y, alpha=0.4, zorder=1, hatch='', color=color, rasterized=True)
+            #axs.semilogx(x, y, ls=ls, color='k', label=key, **plot_kwargs)
+            axs.semilogx(x, y, ls=ls, color=color, label=key, **plot_kwargs)
+            axs.fill_between(x, zmin, y, alpha=0.3, zorder=1, hatch='', color=color, rasterized=True)
             zmin = y
         else:
             axs.semilogx(x, y, ls=ls, color=color, label=key, **plot_kwargs)
         
     
-    plt.xlabel(r'$M_{\rm source}$')
+    plt.xlabel(r'$M_{\rm source} \, [M_\odot]$')
     plt.ylabel(r'$\bar{z}$')
 
     return fig, axs
 
-
-
-def plot_spin():
-    pass
 
 def to_logM_source(logM, z):
     return logM - np.log(1+z) 
@@ -110,8 +111,11 @@ if __name__ == '__main__':
     elif zaxis == 'spin':
         datastring = 'T_{:.1f}_q_{:.1e}_e0_{:.1e}.h5'.format(Tobs, q, e0)
 
+
     else:
         raise ValueError("z-axis must be either 'e0' or 'spin'")
+    
+    savename = plotdir + base_name + '_' + zaxis + '_' + datastring[:-3] + '.pdf'
     
     kerr_kerr_data = base_name + '_traj_kerr_wf_kerr_' + datastring
     kerr_aak_data = base_name + '_traj_kerr_wf_aak_' + datastring
@@ -148,7 +152,9 @@ if __name__ == '__main__':
         #sort the data by increasing zaxis keyword
         keys = list(data.keys())
         sorted_keys = np.sort(keys)
-        #data = {key:data[key] for key in sorted_keys}
+        data = {key:data[key] for key in sorted_keys}
+
+        #cpal = pastel_map('Blues_r', c=0.2, n=len(data.keys())+1)[::-1]
 
         M_detector = attr['M'] # detector-frame mass
         plot_kwargs = dict(zorder=10-i, rasterized=True)
@@ -160,7 +166,7 @@ if __name__ == '__main__':
         else:
             add_plot(M_detector, data, ls, colors=cpal, fill=False, interp=interp, interp_kwargs=interp_kwargs, plot_kwargs=plot_kwargs, fig=fig, axs=ax)
 
-        handle = mlines.Line2D([], [], color='black', linestyle=ls, label=label)
+        handle = mlines.Line2D([], [], color='gray', linestyle=ls, label=label)
         handles += [handle]
 
     # colorbar
@@ -180,9 +186,10 @@ if __name__ == '__main__':
     cbar.ax.yaxis.label.set_rotation(0)
     ax.legend(handles=handles, ncols=3, bbox_to_anchor=(1.038, 1.1))
     fig.tight_layout()
+    ax.xaxis.set_tick_params(pad=6)
     ax.set_xlim(5e5, 2e7)
-    ax.set_ylim(0.1, zmax)
-    plt.savefig('test')
+    ax.set_ylim(0., zmax)
+    plt.savefig(savename, dpi=300)
     #breakpoint()
 
 
