@@ -38,7 +38,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # whether you are using
-use_gpu = False
+use_gpu = True
 
 if use_gpu is True:
     xp = np
@@ -70,11 +70,11 @@ def run_emri_pe(emri_injection_params, Tobs, dt, fp, ntemps, nwalkers, emri_kwar
 
     from lisatools.detector import EqualArmlengthOrbits
 
-    tdi_gen = "2nd generation"
+    tdi_gen = "1st generation"
 
     order = 25  # interpolation order (should not change the result too much)
     tdi_kwargs_esa = dict(
-        orbits=EqualArmlengthOrbits(),
+        orbits=EqualArmlengthOrbits(use_gpu=use_gpu),
         order=order,
         tdi=tdi_gen,
         tdi_chan="AE",
@@ -212,7 +212,7 @@ def run_emri_pe(emri_injection_params, Tobs, dt, fp, ntemps, nwalkers, emri_kwar
     ll_injection = analysis.eryn_likelihood_function(test_params_inj, **like_kwargs)
 
     test_params_adjust = test_params_inj.copy()
-    test_params_adjust[0] *= 1.00001
+    test_params_adjust[0] *= 1.00000001
     ll_adjust = analysis.eryn_likelihood_function(test_params_adjust, **like_kwargs)
 
     print(f"LL check--> inj: {ll_injection} ; adjust: {ll_adjust}")
