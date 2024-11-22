@@ -1,4 +1,5 @@
 import numpy as np
+from eryn.backends import HDFBackend
 from eryn.state import State
 from eryn.ensemble import EnsembleSampler
 from eryn.prior import ProbDistContainer, uniform_dist
@@ -18,14 +19,14 @@ from eryn.utils import TransformContainer
 from fastlisaresponse import ResponseWrapper
 
 from few.utils.constants import *
-
+import os
 np.random.seed(1112)
 
 try:
     import cupy as xp
 
     # set GPU device
-    xp.cuda.runtime.setDevice(6)
+    xp.cuda.runtime.setDevice(7)
     gpu_available = True
 
 except (ImportError, ModuleNotFoundError) as e:
@@ -137,7 +138,7 @@ def run_emri_pe(emri_injection_params, Tobs, dt, fp, ntemps, nwalkers, emri_kwar
             {
                 0: uniform_dist(np.log(1e5), np.log(1e6)),  # M
                 1: uniform_dist(1.0, 100.0),  # mu
-                2: uniform_dist(0.0, 0.999),
+                2: uniform_dist(0.0, 0.9),
                 3: uniform_dist(12.0, 16.0),  # p0
                 4: uniform_dist(0.001, 0.4),  # e0
                 5: uniform_dist(0.01, 100.0),  # dist in Gpc
@@ -166,7 +167,7 @@ def run_emri_pe(emri_injection_params, Tobs, dt, fp, ntemps, nwalkers, emri_kwar
     )
 
     # sampler treats periodic variables by wrapping them properly
-    periodic = {"emri": {7: 2 * np.pi, 9: np.pi, 10: 2 * np.pi, 11: 2 * np.pi}}
+    periodic = {"emri": {7: 2 * np.pi, 9: 2 * np.pi, 10: 2 * np.pi, 11: 2 * np.pi}}
 
     # get injected parameters after transformation
     injection_in = transform_fn.both_transforms(emri_injection_params_in[None, :])[0]
@@ -212,74 +213,89 @@ def run_emri_pe(emri_injection_params, Tobs, dt, fp, ntemps, nwalkers, emri_kwar
     ll_injection = analysis.eryn_likelihood_function(test_params_inj, **like_kwargs)
 
     test_params_adjust = test_params_inj.copy()
-    test_params_adjust[0] *= 1.00000001
+    check_tmp = []
+    for i in np.arange(20):
+        val = i * 0.0000000025
+        for sign in [+1, -1]:
+            test_params_adjust[2] = test_params_inj[2] + sign * val
+            tmptmptmp = analysis.eryn_likelihood_function(test_params_adjust, **like_kwargs)
+            check_tmp.append([test_params_adjust[2], tmptmptmp])
+        print(val)
+    check_tmp = np.asarray(check_tmp)
+    breakpoint()
+    check_tmp[:] = check_tmp[np.argsort(check_tmp[:, 0])]
+    
     ll_adjust = analysis.eryn_likelihood_function(test_params_adjust, **like_kwargs)
 
     print(f"LL check--> inj: {ll_injection} ; adjust: {ll_adjust}")
     ndim = 12
 
-    # generate starting points
-    factor = 1e-5
-    cov = np.ones(ndim) * 1e-3
-    cov[0] = 1e-5
+    if fp not in os.listdir():
+        # generate starting points
+        factor = 1e-5
+        cov = np.ones(ndim) * 1e-3
+        cov[0] = 1e-5
 
-    start_like = np.zeros((nwalkers * ntemps))
+        start_like = np.zeros((nwalkers * ntemps))
+        
+        iter_check = 0
+        max_iter = 1000
+        while np.std(start_like) < 10.0:
 
-    iter_check = 0
-    max_iter = 1000
-    while np.std(start_like) < 10.0:
+            logp = np.full_like(start_like, -np.inf)
+            tmp = np.zeros((ntemps * nwalkers, ndim))
+            fix = np.ones((ntemps * nwalkers), dtype=bool)
+            while np.any(fix):
+                tmp[fix] = (
+                    emri_injection_params_in[None, :]
+                    * (1.0 + factor * cov * np.random.randn(nwalkers * ntemps, ndim))
+                )[fix]
 
-        logp = np.full_like(start_like, -np.inf)
-        tmp = np.zeros((ntemps * nwalkers, ndim))
-        fix = np.ones((ntemps * nwalkers), dtype=bool)
-        while np.any(fix):
-            tmp[fix] = (
-                emri_injection_params_in[None, :]
-                * (1.0 + factor * cov * np.random.randn(nwalkers * ntemps, ndim))
-            )[fix]
+                emri_injection_params_in[7] = emri_injection_params_in[7] % (2 * np.pi)
+                emri_injection_params_in[9] = emri_injection_params_in[9] % (2 * np.pi)
 
-            emri_injection_params_in[5] = emri_injection_params_in[5] % (2 * np.pi)
-            emri_injection_params_in[7] = emri_injection_params_in[7] % (2 * np.pi)
+                # phases
+                emri_injection_params_in[-1] = emri_injection_params_in[-1] % (2 * np.pi)
+                emri_injection_params_in[-2] = emri_injection_params_in[-2] % (2 * np.pi)
 
-            # phases
-            emri_injection_params_in[-1] = emri_injection_params_in[-1] % (2 * np.pi)
-            emri_injection_params_in[-2] = emri_injection_params_in[-2] % (2 * np.pi)
+                tmp[:, 7] = tmp[:, 7] % (2 * np.pi)
+                tmp[:, 9] = tmp[:, 9] % (2 * np.pi)
 
-            tmp[:, 5] = tmp[:, 5] % (2 * np.pi)
-            tmp[:, 7] = tmp[:, 7] % (2 * np.pi)
+                # phases
+                tmp[:, -1] = tmp[:, -1] % (2 * np.pi)
+                tmp[:, -2] = tmp[:, -2] % (2 * np.pi)
 
-            # phases
-            tmp[:, -1] = tmp[:, -1] % (2 * np.pi)
-            tmp[:, -2] = tmp[:, -2] % (2 * np.pi)
+                logp = priors["emri"].logpdf(tmp)
 
-            logp = priors["emri"].logpdf(tmp)
+                fix = np.isinf(logp)
+                if np.all(fix):
+                    breakpoint()
 
-            fix = np.isinf(logp)
-            if np.all(fix):
-                breakpoint()
+            # like.injection_channels[:] = 0.0
+            for i in range(tmp.shape[0]):
+                start_like[i] = analysis.eryn_likelihood_function(tmp[i], **like_kwargs)
 
-        # like.injection_channels[:] = 0.0
-        for i in range(tmp.shape[0]):
-            start_like[i] = analysis.eryn_likelihood_function(tmp[i], **like_kwargs)
+            iter_check += 1
+            factor *= 1.5
 
-        iter_check += 1
-        factor *= 1.5
+            print(np.std(start_like))
 
-        print(np.std(start_like))
+            if iter_check > max_iter:
+                raise ValueError("Unable to find starting parameters.")
 
-        if iter_check > max_iter:
-            raise ValueError("Unable to find starting parameters.")
+        start_params = tmp.copy()
 
-    start_params = tmp.copy()
-
-    start_prior = priors["emri"].logpdf(start_params)
-
-    # start state
-    start_state = State(
-        {"emri": start_params.reshape(ntemps, nwalkers, 1, ndim)},
-        log_like=start_like.reshape(ntemps, nwalkers),
-        log_prior=start_prior.reshape(ntemps, nwalkers),
-    )
+        start_prior = priors["emri"].logpdf(start_params)
+        # start state
+        start_state = State(
+            {"emri": start_params.reshape(ntemps, nwalkers, 1, ndim)},
+            log_like=start_like.reshape(ntemps, nwalkers),
+            log_prior=start_prior.reshape(ntemps, nwalkers),
+        )
+    else:
+        backend = HDFBackend(fp)
+        start_state = backend.get_last_sample() 
+        
 
     # MCMC moves (move, percentage of draws)
     moves = [StretchMove()]
@@ -290,7 +306,7 @@ def run_emri_pe(emri_injection_params, Tobs, dt, fp, ntemps, nwalkers, emri_kwar
         [ndim],  # assumes ndim_max
         analysis.eryn_likelihood_function,
         priors,
-        tempering_kwargs={"ntemps": ntemps, "Tmax": np.inf},
+        tempering_kwargs={"ntemps": ntemps},  # , "Tmax": np.inf},
         moves=moves,
         kwargs=like_kwargs,
         backend=fp,
@@ -304,8 +320,8 @@ def run_emri_pe(emri_injection_params, Tobs, dt, fp, ntemps, nwalkers, emri_kwar
     # TODO: check about using injection as reference when the glitch is added
     # may need to add the heterodyning updater
 
-    nsteps = 100
-    out = sampler.run_mcmc(start_state, nsteps, progress=True, thin_by=20, burn=0)
+    nsteps = 1000
+    out = sampler.run_mcmc(start_state, nsteps, progress=True, thin_by=5, burn=0)
 
     # get samples
     samples = sampler.get_chain(discard=0, thin=1)["emri"][:, 0].reshape(-1, ndim)
@@ -318,10 +334,10 @@ def run_emri_pe(emri_injection_params, Tobs, dt, fp, ntemps, nwalkers, emri_kwar
 
 if __name__ == "__main__":
     # set parameters
-    M = 1e6
-    a = 0.1  # will be ignored in Schwarzschild waveform
+    M = 7e5
+    a = 0.8  # 1324211123  
     mu = 20.0
-    p0 = 12.0
+    p0 = 13.0
     e0 = 0.2
     x0 = +1.0  # will be ignored in Schwarzschild waveform
     qK = 0.2  # polar spin angle
@@ -335,7 +351,7 @@ if __name__ == "__main__":
 
     Tobs = 2.05
     dt = 15.0
-    fp = "test_run_emri_pe_2.h5"
+    fp = "test_run_emri_pe_5.h5"
 
     emri_injection_params = np.array(
         [M, mu, a, p0, e0, x0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
