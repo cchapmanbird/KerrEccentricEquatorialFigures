@@ -217,11 +217,26 @@ def run_emri_pe(emri_injection_params, Tobs, dt, fp, ntemps, nwalkers, emri_kwar
 
     error_params = []
     Ntest = int(5e4)
+    problematic_params = np.asarray([12.161141016662592,
+                81.79933022320697,
+                0.021921527845398314,
+                13.675805436407813,
+                0.021082856665252295,
+                54.10402237544718,
+                0.22794181410759562,
+                6.207204691559134,
+                -0.35491359480842577,
+                0.9799769801132852,
+                3.8432371156423426,
+                4.955433862243734])
+    analysis.eryn_likelihood_function(problematic_params, **like_kwargs)
+    # breakpoint()
     for ii in range(Ntest):
-        # print(f"Running iteration percent: {ii/Ntest}")
+        print(f"Running iteration percent: {ii/Ntest}")
         test_params = priors["emri"].rvs()
         # time likelihood function
-        
+        print(test_params)
+        np.save("error_params.npy", test_params)
         tic = time.time()
         try:
             analysis.eryn_likelihood_function(test_params, **like_kwargs)
@@ -233,8 +248,8 @@ def run_emri_pe(emri_injection_params, Tobs, dt, fp, ntemps, nwalkers, emri_kwar
     
     print("Numbers of errors: ", len(error_params))
     # save error params
-    error_params = np.array(error_params)
-    np.save("error_params.npy", error_params)
+    # error_params = np.array(error_params)
+    # np.save("error_params.npy", error_params)
 
     return
 
