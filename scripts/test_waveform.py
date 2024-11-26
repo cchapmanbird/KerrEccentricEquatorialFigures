@@ -141,7 +141,7 @@ def run_emri_pe(emri_injection_params, Tobs, dt, fp, ntemps, nwalkers, emri_kwar
             {
                 0: uniform_dist(np.log(1e5), np.log(1e7)),  # M
                 1: uniform_dist(1.0, 100.0),  # mu
-                2: uniform_dist(0.0, 0.9),
+                2: uniform_dist(0.0, 0.9), # a
                 3: uniform_dist(9.0, 16.0),  # p0
                 4: uniform_dist(0.0, 0.4),  # e0
                 5: uniform_dist(0.01, 100.0),  # dist in Gpc
@@ -229,6 +229,18 @@ def run_emri_pe(emri_injection_params, Tobs, dt, fp, ntemps, nwalkers, emri_kwar
                 0.9799769801132852,
                 3.8432371156423426,
                 4.955433862243734])
+    problematic_params = np.asarray([13.406649626909388,
+        86.00453480020431,
+        0.07273331719085885,
+        12.536624845563832,
+        0.0009790879035372023,
+        47.81691500237753,
+        -0.13146401642021022,
+        5.020641600302038,
+        -0.8503720031467676,
+        4.134535924414511,
+        3.2235083646764573,
+        2.509783826352497])
     analysis.eryn_likelihood_function(problematic_params, **like_kwargs)
     # breakpoint()
     for ii in range(Ntest):
@@ -242,7 +254,8 @@ def run_emri_pe(emri_injection_params, Tobs, dt, fp, ntemps, nwalkers, emri_kwar
             analysis.eryn_likelihood_function(test_params, **like_kwargs)
         except Exception as e:
             error_params.append(test_params)
-            print(f"Error: {e} with params: {test_params}")
+            print(f"Error: {e} with params: ")
+            [print(test_params[0,ii]) for ii in range(12)]
         toc = time.time()
         # print(f"Time taken: {toc - tic}")
     
