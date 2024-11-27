@@ -1,4 +1,5 @@
 import numpy as np
+from few.utils.utility import p_to_y
 import warnings
 try:
     import cupy as xp
@@ -27,6 +28,24 @@ e = np.linspace(0.0, 0.7, 100)
 p_all, e_all = np.meshgrid(p, e)
 
 teuk_modes = amp(0., p_all.flatten(), e_all.flatten(), 1.)
+
+amp_norm = amp.amp_norm_spline.ev(
+                p_to_y(p_all.flatten(), e_all.flatten()), e_all.flatten()
+            )
+
+amp_for_norm = np.sum(
+    np.abs(
+        np.concatenate(
+            [teuk_modes, np.conj(teuk_modes[:, amp.m0mask])],
+            axis=1,
+        )
+    )
+    ** 2,
+    axis=1,
+) ** (1 / 2)
+
+factor = amp_norm / amp_for_norm
+teuk_modes = teuk_modes * factor[:, np.newaxis]
 
 # (2, 2, 0)
 specific_modes = [(ll, 2, 0) for ll in range(2, 3)]
