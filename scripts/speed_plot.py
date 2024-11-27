@@ -57,7 +57,7 @@ wave_generator_Schwarz(M, mu, 0.0, p0, e0, 1.0, dist, qS, phiS, qK, phiK, Phi_ph
 speed_kerr = []
 speed_schwarz = []
 params = []
-size = 100  # Number of tests to run
+size = 10000  # Number of tests to run
 
 # Loop over the number of tests
 for ii in range(size):
@@ -106,7 +106,12 @@ with open("config.txt", "w") as f:
 # create corner plot of speed results
 import corner
 import matplotlib.pyplot as plt
-to_plot = np.hstack((params, speed_kerr[:,None]))
+
 # create corner plot and save to file
+to_plot = np.hstack((params, speed_kerr[:,None]))
 fig = corner.corner(to_plot, labels=[r"$M$", r"$\mu$", r"$a$", r"$p_0$", r"$e_0$", "speed"], show_titles=False)
-plt.savefig("speed_corner.png")
+plt.savefig("speed_corner_kerr.png")
+
+to_plot = np.hstack((params, speed_schwarz[:,None]))
+fig = corner.corner(to_plot, labels=[r"$M$", r"$\mu$", r"$a$", r"$p_0$", r"$e_0$", "speed"], show_titles=False)
+plt.savefig("speed_corner_schw.png")
