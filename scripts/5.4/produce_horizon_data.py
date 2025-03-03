@@ -12,7 +12,6 @@ parser.add_argument("-qs", "--qs", help="mass ratio", required=False, nargs='*',
 parser.add_argument("-e0s", "--e0s", help="initial eccentricity", required=False, nargs='*', default=0.0, type=float)
 parser.add_argument("-spins", "--spins", help="dimensionless spin", required=False, nargs='*', default=0.99, type=float)
 parser.add_argument("-x0", "--x0", help="prograde orbits", default=1.0, required=False, type=float)
-#parser.add_argument("-dev", "--dev", help="Cuda Device", required=False, default=None)
 parser.add_argument("-dt", "--dt", help="sampling interval delta t", required=False, type=float, default=5.0)
 parser.add_argument("-SNR", "--SNR", help="SNR", required=False, type=float, default=20.0)
 parser.add_argument("-outname", "--outname", help="output name", required=False, type=str, default="")
@@ -38,19 +37,20 @@ import matplotlib.lines as mlines
 import numpy as np
 from eryn.prior import ProbDistContainer, uniform_dist
 
-sys.path.append('/data/asantini/emris/DirtyEMRI/DataAnalysis/LISAanalysistools/')
+#sys.path.append('/data/asantini/emris/DirtyEMRI/DataAnalysis/LISAanalysistools/')
 
 from lisatools.diagnostic import *
 from lisatools.sensitivity import get_sensitivity
+from lisatools.detector import EqualArmlengthOrbits, ESAOrbits
 
-from eryn.utils import TransformContainer
-
-from few.waveform import AAKWaveformBase, KerrEccentricEquatorialFlux, FastSchwarzschildEccentricFlux
+from few.trajectory.ode.flux import SchwarzEccFlux, KerrEccEqFlux
+from few.trajectory.ode.pn5 import PN5
+from few.waveform.waveform import GenerateEMRIWaveform, AAKWaveformBase, FastKerrEccentricEquatorialFlux, FastSchwarzschildEccentricFlux
 from few.trajectory.inspiral import EMRIInspiral
-from few.summation.aakwave import KerrAAKSummation
-from few.waveform import GenerateEMRIWaveform
+from few.summation.aakwave import AAKSummation
 from few.utils.constants import *
 from few.utils.utility import get_p_at_t, get_separatrix
+from few.utils.globals import get_first_backend
 
 from fastlisaresponse import ResponseWrapper
 
@@ -133,7 +133,7 @@ class wave_gen_windowed:
         self.wave_gen = wave_gen
         self.window_fn = window_fn
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, kwargs={}):
         wave = self.wave_gen(*args, **kwargs)
         if isinstance(wave, list):
             window = xp.asarray(get_window(self.window_fn, len(wave[0])))
@@ -161,16 +161,17 @@ def generate_data(
     N_obs = int(Tobs * YRSID_SI / dt) # may need to put "- 1" here because of real transform
     Tobs = (N_obs * dt) / YRSID_SI
 
-    orbit_file_esa = "esa-trailing-orbits.h5" 
-    # orbit_file_esa = "/data/lsperi/lisa-on-gpu/orbit_files/equalarmlength-trailing-fit.h5"
-    orbit_kwargs_esa = dict(orbit_file=orbit_file_esa)
-
     tdi_gen ="1st generation"# "2nd generation"#
 
     order = 25  # interpolation order (should not change the result too much)
+    orbits = EqualArmlengthOrbits(use_gpu=use_gpu) # ESAOrbits(use_gpu=use_gpu)
+
     tdi_kwargs_esa = dict(
-        orbit_kwargs=orbit_kwargs_esa, order=order, tdi=tdi_gen, tdi_chan="AE",
-    )  # could do "AET"
+        orbits=orbits,
+        order=order,
+        tdi=tdi_gen,
+        tdi_chan="AE",
+    )  # could do "AET
 
     index_lambda = 8
     index_beta = 7
@@ -209,11 +210,10 @@ def generate_data(
         ) 
     }
 
-
     def get_p0(M, mu, a, e0, x0, Tobs):
         # fix p0 given T
         try:
-            p0 = get_p_at_t(traj,Tobs * 0.999,[M, mu, a, e0, x0],bounds=[get_separatrix(a,e0,x0)+0.1, 40.0])
+            p0 = get_p_at_t(traj,Tobs * 0.999,[M, mu, a, e0, x0],bounds=[get_separatrix(a,e0,x0)+0.1, 150.0])
         except Exception as e:
             print(e)
             breakpoint()   
@@ -226,7 +226,7 @@ def generate_data(
     #                 psd_kwargs={'stochastic_params':(Tobs,)},
     #                 ) 
     
-    inner_kw = dict(dt=dt,PSD="noisepsd_AE",PSD_args=(),PSD_kwargs={'includewd':Tobs},use_gpu=use_gpu) 
+    inner_kw = dict(dt=dt,psd="A1TDISens",psd_args=(),psd_kwargs={"stochastic_params": (Tobs,)},use_gpu=use_gpu) 
     
     def get_snr(inp, emri_kwargs={}):
         #print('p', inp)
@@ -263,7 +263,7 @@ def generate_data(
 
         ffth = xp.fft.rfft(data_channels[0])*dt
         fft_freq = xp.fft.rfftfreq(len(data_channels[0]),dt)
-        PSD_arr = get_sensitivity(fft_freq, sens_fn=inner_kw['PSD'], **inner_kw['PSD_kwargs'])
+        PSD_arr = get_sensitivity(fft_freq, sens_fn=inner_kw['psd'], **inner_kw['psd_kwargs'])
         plt.figure()
         try:
             plt.plot(fft_freq.get(), (xp.abs(ffth)**2).get())
@@ -338,8 +338,8 @@ if __name__ == '__main__':
     wf_module = args['wf']
     grid_keys = args['grids']
 
-    inspiral_func_all = dict(zip(['kerr', 'schwarzschild', 'pn5'], ['KerrEccentricEquatorial', 'SchwarzEccFlux', 'pn5']))
-    args_all = dict(zip(['kerr', 'schwarzschild', 'aak'], [[KerrEccentricEquatorialFlux,], [FastSchwarzschildEccentricFlux,], [AAKWaveformBase, EMRIInspiral, KerrAAKSummation]]))
+    inspiral_func_all = dict(zip(['kerr', 'schwarzschild', 'pn5'], [KerrEccEqFlux, SchwarzEccFlux, PN5]))
+    args_all = dict(zip(['kerr', 'schwarzschild', 'aak'], [[FastKerrEccentricEquatorialFlux,], [FastSchwarzschildEccentricFlux,], [AAKWaveformBase, EMRIInspiral, AAKSummation]]))
 
 
     print("generating different " + grid_keys[0] + " lines for " + grid_keys[1] + " grid")
@@ -390,8 +390,12 @@ if __name__ == '__main__':
         traj = EMRIInspiral(func=inspiral_func)
         args = args_all[amp_here]
 
+
+        best_backend = get_first_backend(FastKerrEccentricEquatorialFlux.supported_backends())
+        backend = best_backend if use_gpu else 'cpu'
+
         sum_kwargs = {
-            "use_gpu": use_gpu, # GPU is available for this type of summation
+            "force_backend": backend, # GPU is available for this type of summation
             "pad_output": True
         }
 
