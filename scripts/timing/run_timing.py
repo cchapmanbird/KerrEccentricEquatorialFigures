@@ -121,8 +121,8 @@ if __name__ == "__main__":
     vec_par = []
 
     # create a list of input parameters for M, mu, a, p0, e0, x0
-    for mass in [1e5, 1e6, 1e7]:
-        for el in np.linspace(0.1, 0.6, num=3):
+    for mass in [1e5, 5e5, 1e6, 5e6, 1e7, 5e7]:
+        for el in np.linspace(0.1, 0.6, 10, endpoint=True):
             temp = emri_injection_params.copy()
             temp[0] = mass
             temp[4] = el
