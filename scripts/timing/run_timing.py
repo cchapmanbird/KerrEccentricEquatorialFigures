@@ -1,10 +1,11 @@
 import numpy as np
 import sys
 import os
+import argparse
 
 sys.path.append(os.getcwd())
 
-from timing_utils import time_waveform_generation
+from timing_utils import time_full_waveform_generation
 from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode.flux import KerrEccEqFlux
 from few.utils.utility import get_p_at_t
@@ -14,7 +15,52 @@ import json
 
 if __name__ == "__main__":
 
-    output_filename = "initial_timing_results.json"
+    parser = argparse.ArgumentParser(
+        description="Timing tests for FastEMRIWaveforms.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument("--delta-t", help="time step", type=float, default=5.0)
+    parser.add_argument(
+        "-f",
+        "--filename",
+        help="output json filename (without path)",
+        type=str,
+        default="initial_timing_results.json",
+    )
+    parser.add_argument(
+        "--duration", help="signal duration in years", type=float, default=1.0
+    )
+    parser.add_argument(
+        "--iterations",
+        help="number of waveforms generated when averaging timing",
+        type=int,
+        default=1,
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Turn verbosity on/off",
+        action="store_true",
+        default=False,
+    )
+
+    args = parser.parse_args()
+
+    output_filename = args.filename + ".json"
+    iterations = args.iterations
+    dt = args.delta_t  # time interval
+    duration = args.duration
+
+    if args.verbose:
+        print(
+            (
+                "Running FEW timing test"
+                + f"\noutput filename: {output_filename},"
+                + f"\niterations: {iterations},"
+                + f"\ndelta_t: {dt},"
+                + f"\nduration: {duration}"
+            )
+        )
 
     # produce sensitivity function
     traj_module = EMRIInspiral(func=KerrEccEqFlux)
@@ -34,8 +80,6 @@ if __name__ == "__main__":
         return_list=True,
     )
 
-    iterations = 10
-
     # define the injection parameters
     M = 0.5e6  # central object mass
     a = 0.9  # will be ignored in Schwarzschild waveform
@@ -53,8 +97,6 @@ if __name__ == "__main__":
     Phi_phi0 = np.pi / 3
     Phi_theta0 = 0.0
     Phi_r0 = np.pi / 3
-
-    dt = 5.0  # time interval
 
     emri_injection_params = [
         M,
@@ -75,7 +117,6 @@ if __name__ == "__main__":
 
     timing_results = []
     vec_par = []
-    Tobs = 2.0
 
     # create a list of input parameters for M, mu, a, p0, e0, x0
     for mass in [1e5, 1e6, 1e7]:
@@ -85,7 +126,7 @@ if __name__ == "__main__":
             temp[4] = el
             temp[3] = get_p_at_t(
                 traj_module,
-                Tobs * 0.99,
+                duration * 0.99,
                 [temp[0], temp[1], temp[2], temp[4], 1.0],
                 index_of_p=3,
                 index_of_a=2,
@@ -98,12 +139,17 @@ if __name__ == "__main__":
             vec_par.append(temp.copy())
 
     waveform_kwargs = {
-        "T": Tobs,
+        "T": duration,
         "dt": dt,
         "eps": 1e-2,
     }
     timing_results = time_waveform_generation(
-        few_gen, td_gen, vec_par, waveform_kwargs, iterations=iterations, verbose=True
+        few_gen,
+        td_gen,
+        vec_par,
+        waveform_kwargs,
+        iterations=iterations,
+        verbose=args.verbose,
     )
 
     json.dump(timing_results, open(output_filename, "w"), indent=4)
