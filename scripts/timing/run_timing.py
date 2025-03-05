@@ -1,4 +1,8 @@
 import numpy as np
+import sys
+import os
+
+sys.path.append(os.getcwd())
 
 from timing_utils import time_waveform_generation
 from few.trajectory.inspiral import EMRIInspiral
