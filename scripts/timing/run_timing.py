@@ -143,7 +143,7 @@ if __name__ == "__main__":
         "dt": dt,
         "eps": 1e-2,
     }
-    timing_results = time_waveform_generation(
+    timing_results = time_full_waveform_generation(
         few_gen,
         td_gen,
         vec_par,
