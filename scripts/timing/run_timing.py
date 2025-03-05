@@ -46,10 +46,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    output_filename = args.filename + ".json"
     iterations = args.iterations
     dt = args.delta_t  # time interval
     duration = args.duration
+    output_filename = (
+        args.filename + f"dur_{duration}_dt_{dt}_iters_{iterations}" + ".json"
+    )
 
     if args.verbose:
         print(
