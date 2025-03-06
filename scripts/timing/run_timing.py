@@ -31,6 +31,9 @@ if __name__ == "__main__":
         "--duration", help="signal duration in years", type=float, default=1.0
     )
     parser.add_argument(
+        "--epsilon", help="mode threshold cutoff", type=float, default=1e-2
+    )
+    parser.add_argument(
         "--iterations",
         help="number of waveforms generated when averaging timing",
         type=int,
@@ -52,6 +55,12 @@ if __name__ == "__main__":
     output_filename = (
         args.filename + f"dur_{duration}_dt_{dt}_iters_{iterations}" + ".json"
     )
+
+    waveform_kwargs = {
+        "T": duration,
+        "dt": dt,
+        "eps": args.epsilon,
+    }
 
     if args.verbose:
         print(
@@ -116,6 +125,27 @@ if __name__ == "__main__":
         Phi_theta0,
         Phi_r0,
     ]
+    emri_injection_params[3] = get_p_at_t(
+        traj_module,
+        duration * 0.99,
+        [
+            emri_injection_params[0],
+            emri_injection_params[1],
+            emri_injection_params[2],
+            emri_injection_params[4],
+            1.0,
+        ],
+        index_of_p=3,
+        index_of_a=2,
+        index_of_e=4,
+        index_of_x=5,
+        traj_kwargs={},
+        xtol=2e-6,
+        rtol=8.881784197001252e-6,
+    )
+
+    # run things one to cache
+    few_gen(*emri_injection_params, **waveform_kwargs)
 
     timing_results = []
     vec_par = []
@@ -140,11 +170,6 @@ if __name__ == "__main__":
             )
             vec_par.append(temp.copy())
 
-    waveform_kwargs = {
-        "T": duration,
-        "dt": dt,
-        "eps": 1e-2,
-    }
     timing_results = time_full_waveform_generation(
         few_gen,
         td_gen,
