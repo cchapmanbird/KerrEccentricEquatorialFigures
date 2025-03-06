@@ -129,10 +129,22 @@ def SNR_function(sig1_t, dt, N_channels = 2):
     return SNR
 ##======================Likelihood and Posterior (change this)=====================
 
-M = 1e6; mu = 10; a = 0.9; p0 = 8.54; e0 = 0.62; x_I0 = 1.0;
+# SNR comparisons for M = 1e6 and mu = 1e1
+# M = 1e6; mu = 10; a = 0.9; p0 = 8.54; e0 = 0.62; x_I0 = 1.0;
+# dist = 1.0; qS = 0.7; phiS = 0.7; qK = 0.7; phiK = 0.7; 
+# Phi_phi0 = 2.0; Phi_theta0 = 3.0; Phi_r0 = 4.0
+
+# SNR comparisons for M = 1e6 and mu = 1e1
+# M = 1e7; mu = 100; a = 0.9; p0 = 8.54; e0 = 0.62; x_I0 = 1.0;
+# dist = 1.0; qS = 0.7; phiS = 0.7; qK = 0.7; phiK = 0.7; 
+# Phi_phi0 = 2.0; Phi_theta0 = 3.0; Phi_r0 = 4.0
+# delta_t = 10.0;  # Sampling interval [seconds]
+# T = 2.0     # Evolution time [years]
+
+# SNR comparisons for M = 1e5 and mu = 1e1
+M = 1e5; mu = 1e1; a = 0.998; p0 = 8.54; e0 = 0.62; x_I0 = 1.0;
 dist = 1.0; qS = 0.7; phiS = 0.7; qK = 0.7; phiK = 0.7; 
 Phi_phi0 = 2.0; Phi_theta0 = 3.0; Phi_r0 = 4.0
-
 delta_t = 10.0;  # Sampling interval [seconds]
 T = 2.0     # Evolution time [years]
 ## =================== SET UP PARAMETERS =====================
@@ -152,6 +164,7 @@ if a < 0:
 t_traj, p_traj, e_traj, Y_traj, Phi_phi_traj, Phi_r_traj, Phi_theta_traj = traj(M, mu, a, p0, e0, x_I0,
                                              Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T)
 
+print("Final moment of p = ", p_traj[-1])
 traj_args = [M, mu, a, e_traj[0], Y_traj[0]]
 index_of_p = 3
 # Check to see what value of semi-latus rectum is required to build inspiral lasting T years. 
@@ -165,7 +178,8 @@ p_new = get_p_at_t(
     index_of_x=5,
     xtol=2e-12,
     rtol=8.881784197001252e-16,
-    bounds=[6, 15]
+    bounds=None
+    # bounds=[4,6]
 )
 
 print("We require initial semi-latus rectum of ",p_new, "for inspiral lasting", T, "years")
@@ -256,17 +270,22 @@ print("SNR for Kerr_FEW is",SNR_Kerr_FEW)
 print("SNR for AAK_FEW is",SNR_AAK_FEW)
 
 
-# a_vec = np.arange(0, 0.9, 0.1)
-# extra_a = np.array([0.99, 0.998])
+a_vec = np.arange(0, 1.0, 0.1)
+extra_a = np.array([0.99, 0.998])
 
-# a_vec = np.concatenate([a,extra_a])
-e0_vec = np.arange(0.01,0.71,0.01)
+# a_vec = np.concatenate([a_vec,extra_a])
+# e0_start = np.array([0.01])
+e0_vec = np.arange(0.01,0.91,0.01)
 
+# e0_vec = np.concatenate([e0_start,e0_vec])
 SNR_Kerr_vec=[]
 SNR_AAK_vec=[]
 
-data_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/AAK_Kerr_Comparisons/SNR_data/"
-a_vec = [0.9,0.99,0.998]
+# data_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/AAK_Kerr_Comparisons/SNR_data/M1e6_mu1e1"
+# data_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/AAK_Kerr_Comparisons/SNR_data/M1e7_mu1e2/"
+data_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/AAK_Kerr_Comparisons/SNR_data/no_lim_e0/M1e5_mu1/"
+np.save(data_direc + "e0_vec.npy", e0_vec)
+
 for spin in a_vec:
     SNR_Kerr_vec=[]
     SNR_AAK_vec=[]
@@ -279,19 +298,36 @@ for spin in a_vec:
         traj_args = [M, mu, spin, eccentricity, 1.0]
         index_of_p = 3
 
-        p_new = get_p_at_t(
-            traj,
-            T,
-            traj_args,
-            index_of_p=3,
-            index_of_a=2,
-            index_of_e=4,
-            index_of_x=5,
-            xtol=2e-12,
-            rtol=8.881784197001252e-16,
-            bounds=[6,15]
-            # bounds=None
-        )
+        try:
+            if spin >= 0.9:
+                p_new = get_p_at_t(
+                    traj,
+                    T,
+                    traj_args,
+                    index_of_p=3,
+                    index_of_a=2,
+                    index_of_e=4,
+                    index_of_x=5,
+                    xtol=2e-12,
+                    rtol=8.881784197001252e-16,
+                    bounds=[24,30]
+                )
+            else:
+                p_new = get_p_at_t(
+                    traj,
+                    T,
+                    traj_args,
+                    index_of_p=3,
+                    index_of_a=2,
+                    index_of_e=4,
+                    index_of_x=5,
+                    xtol=2e-12,
+                    rtol=8.881784197001252e-16,
+                    bounds=None
+                )            
+        except ValueError:
+            print("error with interpolant, continuing ")
+            break
         print(f"value of p_new={p_new} to give T_obs = 2 years")
      
         params = [M,mu,spin,p_new,eccentricity,1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]  
@@ -305,7 +341,6 @@ for spin in a_vec:
         SNR_Kerr_vec.append(xp.asnumpy(SNR_Kerr))
         SNR_AAK_vec.append(xp.asnumpy(SNR_AAK))
 
-    np.save(data_direc + "e0_vec.npy", e0_vec)
     np.save(data_direc + f"SNR_Kerr_vec_{spin}.npy", SNR_Kerr_vec)
     np.save(data_direc + f"SNR_AAK_vec_{spin}.npy", SNR_AAK_vec)
 
