@@ -27,8 +27,12 @@ def get_parameter_to_index_mapping():
         }
 
 
-def transform_mass_ratio(logM, logeta):
-    return [np.exp(logM), np.exp(logM) * np.exp(logeta)]
+def transform_masses(log_mass1, log_mass_ratio):
+    # here mass_ratio is defined mass_2 / mass_1
+    mass_1 = 10**log_mass1
+    mass_ratio = 10**log_mass_ratio
+    mass_2 = mass_ratio * mass_1
+    return mass_1, mass_2
 
 
 def gen_parameters(N_SAMPLES, duration, seed_in=314159, verbose=False):
@@ -80,17 +84,22 @@ def gen_parameters(N_SAMPLES, duration, seed_in=314159, verbose=False):
 
     for i, (log_10_m1, log_10_eta, spin, ecc) in enumerate(samples):
 
-        mass_1, mass_2 = transform_mass_ratio(log_10_m1, log_10_eta)
+        mass_1, mass_2 = transform_masses(log_10_m1, log_10_eta)
 
         try:
             if verbose:
                 print(f"{i+1}:\t{mass_1}, {mass_2}, {spin}, {ecc}")
+
             updated_params = _base_params.copy()
 
             updated_params[0] = mass_1
             updated_params[1] = mass_2
             updated_params[2] = spin
             updated_params[4] = ecc
+
+
+            print(updated_params)
+
             updated_params[3] = get_p_at_t(
                 traj_module,
                 duration * 0.99,
@@ -101,8 +110,8 @@ def gen_parameters(N_SAMPLES, duration, seed_in=314159, verbose=False):
                     updated_params[4],
                     1.0,
                 ],
-                index_of_p=3,
                 index_of_a=2,
+                index_of_p=3,
                 index_of_e=4,
                 index_of_x=5,
                 traj_kwargs={},

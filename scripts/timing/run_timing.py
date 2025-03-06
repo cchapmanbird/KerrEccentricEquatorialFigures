@@ -19,13 +19,13 @@ if __name__ == "__main__":
         description="Timing tests for FastEMRIWaveforms.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--delta-t", help="time step", type=float, default=5.0)
+    parser.add_argument("--delta-t", help="time step", type=float, default=10.0)
     parser.add_argument(
         "-f",
         "--filename",
         help="output json filename (without path)",
         type=str,
-        default="initial_timing_results.json",
+        default="initial_timing_results",
     )
     parser.add_argument(
         "--duration", help="signal duration in years", type=float, default=1.0
@@ -46,15 +46,32 @@ if __name__ == "__main__":
         action="store_true",
         default=False,
     )
+    parser.add_argument(
+        "-g",
+        "--generate-parameters",
+        help="flag to generate random seed parameters for test",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--nsamples",
+        help="specifies number of samples to generate if random parameters requested",
+        type=int,
+        default=10,
+    )
+    parser.add_argument(
+        "--seed",
+        help="specifies seed for random parameters requested",
+        type=int,
+        default=314159,
+    )
 
     args = parser.parse_args()
 
     iterations = args.iterations
     dt = args.delta_t  # time interval
     duration = args.duration
-    output_filename = (
-        args.filename + f"dur_{duration}_dt_{dt}_iters_{iterations}" + ".json"
-    )
+    output_filename = args.filename + ".json"
 
     waveform_kwargs = {
         "T": duration,
@@ -92,9 +109,9 @@ if __name__ == "__main__":
     )
 
     # define the injection parameters
-    M = 0.5e6  # central object mass
-    a = 0.9  # will be ignored in Schwarzschild waveform
-    mu = 10.0  # secondary object mass
+    mass_1 = 0.5e6  # central object mass
+    mass_2 = 10.0  # secondary object mass
+    spin = 0.9  # dimensionful Kerr parameter at 1MSun
     p0 = 12.0  # initial semi-latus rectum
     e0 = 0.1  # eccentricity
 
@@ -110,9 +127,9 @@ if __name__ == "__main__":
     Phi_r0 = np.pi / 3
 
     emri_injection_params = [
-        M,
-        mu,
-        a,
+        mass_1,
+        mass_2,
+        spin,
         0.0,
         e0,
         x0,
@@ -127,7 +144,7 @@ if __name__ == "__main__":
     ]
     emri_injection_params[3] = get_p_at_t(
         traj_module,
-        duration * 0.99,
+        duration * 0.99,  # buffer for... reasons?
         [
             emri_injection_params[0],
             emri_injection_params[1],
@@ -144,39 +161,60 @@ if __name__ == "__main__":
         rtol=8.881784197001252e-6,
     )
 
-    # run things one to cache
+    # run things once to cache, this will sometimes take a few seconds
     few_gen(*emri_injection_params, **waveform_kwargs)
 
     timing_results = []
-    vec_par = []
 
-    # create a list of input parameters for M, mu, a, p0, e0, x0
-    for mass in [1e5, 5e5, 1e6, 5e6, 1e7, 5e7]:
-        for el in np.linspace(0.1, 0.6, 10, endpoint=True):
-            temp = emri_injection_params.copy()
-            temp[0] = mass
-            temp[4] = el
-            temp[3] = get_p_at_t(
-                traj_module,
-                duration * 0.99,
-                [temp[0], temp[1], temp[2], temp[4], 1.0],
-                index_of_p=3,
-                index_of_a=2,
-                index_of_e=4,
-                index_of_x=5,
-                traj_kwargs={},
-                xtol=2e-6,
-                rtol=8.881784197001252e-6,
-            )
-            vec_par.append(temp.copy())
+    # check to generate random parameters
+    if args.generate_parameters:
+        from timing_utils import gen_parameters
+
+        parameter_list, flist = gen_parameters(
+            args.nsamples, duration, seed_in=args.seed, verbose=args.verbose
+        )
+        print(parameter_list)
+        print(flist)
+    else:
+        parameter_list = []
+        # create a list of input parameters
+        # ranging over mass_1 and eccentricity values
+        for mass in [1e5, 1e6, 1e7]:
+            for ecc in np.linspace(0.1, 0.6, 3, endpoint=False):
+                temp = emri_injection_params.copy()
+                temp[0] = mass
+                temp[4] = ecc
+                temp[3] = get_p_at_t(
+                    traj_module,
+                    duration * 0.99,
+                    [temp[0], temp[1], temp[2], temp[4], 1.0],
+                    index_of_a=2,
+                    index_of_p=3,
+                    index_of_e=4,
+                    index_of_x=5,
+                    traj_kwargs={},
+                    xtol=2e-6,
+                    rtol=8.881784197001252e-6,
+                )
+                parameter_list.append(temp.copy())
 
     timing_results = time_full_waveform_generation(
         few_gen,
         td_gen,
-        vec_par,
+        parameter_list,
         waveform_kwargs,
         iterations=iterations,
         verbose=args.verbose,
     )
 
-    json.dump(timing_results, open(output_filename, "w"), indent=4)
+    output = {
+        "metadata": {
+            "duration": duration,
+            "delta_t": dt,
+            "iterations": iterations,
+            "epsilon": args.epsilon,
+        },
+        "results": timing_results.copy(),
+    }
+
+    json.dump(output, open(output_filename, "w"), indent=4)
