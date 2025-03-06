@@ -52,7 +52,8 @@ parser.add_argument(
 
 # -- utility functions ---------------------
 def transform_mass_ratio(logM, logeta):
-    return [np.exp(logM), np.exp(logM) * np.exp(logeta)]
+    # takes in log10 of values
+    return [10**logM, 10**logM * 10**logeta]
 
 
 def get_amp_phase(h):
