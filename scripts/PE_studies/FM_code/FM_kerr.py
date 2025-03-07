@@ -26,7 +26,6 @@ from few.utils.utility import get_separatrix, get_p_at_t
 
 from few.summation.directmodesum import DirectModeSum 
 from few.summation.interpolatedmodesum import InterpolatedModeSum
-from few.amplitude.ampinterp2d import AmpInterpKerrEqEcc
 from few.utils.modeselector import ModeSelector, NeuralModeSelector
 
 # Import features from eryn
@@ -37,10 +36,13 @@ from eryn.backends import HDFBackend
 
 MAKE_PLOT = True
 # Import parameters
-sys.path.append("/home/ad/burkeol/work/Parameter_Estimation_EMRIs/Kerr_FEW_PE/mcmc_code")
+sys.path.append("/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/PE_studies")
 from EMRI_settings import (M, mu, a, p0, e0, x_I0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0, T, delta_t)
 use_gpu = True
 
+# name_file = "M_1e7_mu_1e1_a_0p998_p0_2p12_e0_0p425_dist_5p465_SNR_30_dt_10_T_2"
+# name_file = "M_1e7_mu_1e5_a_0p95_p0_23p6015_e0_0p85_dist_7p25_SNR_30_dt_10_T_2"
+name_file = "M_1e5_mu_70_a_0p998_p0_44p321_e0_0p5_dist_7p28_SNR_30_dt_5_T_2"
 YRSID_SI = 31558149.763545603
 
 np.random.seed(1234)
@@ -143,8 +145,8 @@ p_new = get_p_at_t(
     index_of_x=5,
     xtol=2e-12,
     rtol=8.881784197001252e-16,
-    # bounds=[6, 15]
-    bounds=[10, 150]
+    bounds=None
+    # bounds=[10, 150]
 )
 
 
@@ -190,7 +192,6 @@ params = [M, mu, a, p0, e0, 1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0,
 
 print("Running the truth waveform")
 
-breakpoint()
 Kerr_TDI_waveform = EMRI_TDI_Model(*params)
 # def new_func(*params, **kwargs):
 #     output = EMRI_TDI_Model(*params, **kwargs)
@@ -225,6 +226,7 @@ print("SNR for Kerr_FEW is",SNR_Kerr_FEW)
 # ================== PLOT THE A CHANNEL ===================
 
 if MAKE_PLOT == True:
+    plot_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/PE_studies/waveform_plots/freq_domain/"
     plt.loglog(freq_np[1:], freq_np[1:]*abs(cp.asnumpy(Kerr_TDI_fft[0][1:])), label = "Waveform frequency domain")
     plt.loglog(freq_np[1:], np.sqrt(freq_np[1:] * cp.asnumpy(PSD_AET[0][1:])), label = "TDI2 PSD")
     plt.xlabel(r'Frequency [Hz]', fontsize = 30)
@@ -232,18 +234,18 @@ if MAKE_PLOT == True:
     plt.title(fr'$(M, \mu, a, p_0, e_0, D_L)$ = {M,mu,p0,a, e0,dist}')
     plt.grid()
     plt.xlim([1e-4,freq_np[-1]])
-    plt.savefig("/home/ad/burkeol/work/Parameter_Estimation_EMRIs/Kerr_FEW_PE/mcmc_code/plots/charac_strain.png", bbox_inches = "tight")
+    plt.savefig(plot_direc + name_file + "_charac_strain.png", bbox_inches = "tight")
 
 # ============================= COMPUTE THE FISHER MATRIX =========================================
 param_names = ['M','mu','a','p0','e0','dist','qS','phiS','qK','phiK','Phi_phi0','Phi_r0']
-output_dir = "/home/ad/burkeol/work/Parameter_Estimation_EMRIs/Kerr_FEW_PE/FM_code/FM_output"
+output_dir = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/PE_studies/FM_code/FM_output"
 
 fish = StableEMRIFisher(M, mu, a, p0, e0, 1.0, dist, qS, phiS, qK, phiK,
                         Phi_phi0, Phi_theta0, Phi_r0, 
                         dt=delta_t, T=T, EMRI_waveform_gen=EMRI_TDI_Model, 
                         noise_kwargs=dict(TDI="TDI2"), 
                         param_names=param_names, stats_for_nerds=True, use_gpu=use_gpu, 
-                        der_order=4., Ndelta=10, filename=output_dir,
+                        der_order=4., Ndelta=30, filename=output_dir,
                         deltas = None,
                         # log_e = log_e, # useful for sources close to zero eccentricity
                         CovEllipse=False, # will return the covariance and plot it
@@ -255,5 +257,6 @@ fish = StableEMRIFisher(M, mu, a, p0, e0, 1.0, dist, qS, phiS, qK, phiK,
 SNR = fish.SNRcalc_SEF()
 fim = fish()
 cov = np.linalg.inv(fim)
-
+FM_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/PE_studies/Data/Cov_Matrices/FM_cov_matrices/"
+np.save(FM_direc + name_file + ".npy",cov)
 breakpoint()

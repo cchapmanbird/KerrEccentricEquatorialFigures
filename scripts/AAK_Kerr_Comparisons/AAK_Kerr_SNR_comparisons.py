@@ -37,10 +37,6 @@ YRSID_SI = 31558149.763545603
 np.random.seed(1234)
 use_gpu = True
 
-YRSID_SI = 31558149.763545603
-
-np.random.seed(1234)
-
 tdi_gen = "2nd generation"
 
 order = 25  # interpolation order (should not change the result too much)
@@ -130,22 +126,25 @@ def SNR_function(sig1_t, dt, N_channels = 2):
 ##======================Likelihood and Posterior (change this)=====================
 
 # SNR comparisons for M = 1e6 and mu = 1e1
-# M = 1e6; mu = 10; a = 0.9; p0 = 8.54; e0 = 0.62; x_I0 = 1.0;
-# dist = 1.0; qS = 0.7; phiS = 0.7; qK = 0.7; phiK = 0.7; 
-# Phi_phi0 = 2.0; Phi_theta0 = 3.0; Phi_r0 = 4.0
+#M = 1e6; mu = 10; a = 0.9; p0 = 8.54; e0 = 0.62; x_I0 = 1.0;
+#dist = 1.0; qS = 0.7; phiS = 0.7; qK = 0.7; phiK = 0.7; 
+#Phi_phi0 = 2.0; Phi_theta0 = 3.0; Phi_r0 = 4.0
+#delta_t = 10.0
+#T = 2.0
 
 # SNR comparisons for M = 1e6 and mu = 1e1
-# M = 1e7; mu = 100; a = 0.9; p0 = 8.54; e0 = 0.62; x_I0 = 1.0;
-# dist = 1.0; qS = 0.7; phiS = 0.7; qK = 0.7; phiK = 0.7; 
-# Phi_phi0 = 2.0; Phi_theta0 = 3.0; Phi_r0 = 4.0
-# delta_t = 10.0;  # Sampling interval [seconds]
-# T = 2.0     # Evolution time [years]
+#M = 1e7; mu = 100; a = 0.9; p0 = 8.54; e0 = 0.62; x_I0 = 1.0;
+#dist = 1.0; qS = 0.7; phiS = 0.7; qK = 0.7; phiK = 0.7; 
+#Phi_phi0 = 2.0; Phi_theta0 = 3.0; Phi_r0 = 4.0
+#delta_t = 10.0;  # Sampling interval [seconds]
+#T = 2.0     # Evolution time [years]
 
 # SNR comparisons for M = 1e5 and mu = 1e1
 M = 1e5; mu = 1e1; a = 0.998; p0 = 8.54; e0 = 0.62; x_I0 = 1.0;
 dist = 1.0; qS = 0.7; phiS = 0.7; qK = 0.7; phiK = 0.7; 
 Phi_phi0 = 2.0; Phi_theta0 = 3.0; Phi_r0 = 4.0
-delta_t = 10.0;  # Sampling interval [seconds]
+
+delta_t = 2.0;  # Sampling interval [seconds]
 T = 2.0     # Evolution time [years]
 ## =================== SET UP PARAMETERS =====================
 
@@ -275,7 +274,8 @@ extra_a = np.array([0.99, 0.998])
 
 # a_vec = np.concatenate([a_vec,extra_a])
 # e0_start = np.array([0.01])
-e0_vec = np.arange(0.01,0.91,0.01)
+e0_vec = np.arange(0.01,0.71,0.01)
+# e0_vec = np.arange(0.4,0.71,0.01)
 
 # e0_vec = np.concatenate([e0_start,e0_vec])
 SNR_Kerr_vec=[]
@@ -283,9 +283,10 @@ SNR_AAK_vec=[]
 
 # data_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/AAK_Kerr_Comparisons/SNR_data/M1e6_mu1e1"
 # data_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/AAK_Kerr_Comparisons/SNR_data/M1e7_mu1e2/"
-data_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/AAK_Kerr_Comparisons/SNR_data/no_lim_e0/M1e5_mu1/"
-np.save(data_direc + "e0_vec.npy", e0_vec)
+data_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/AAK_Kerr_Comparisons/SNR_data/M1e5_mu1/"
+# np.save(data_direc + "e0_vec.npy", e0_vec)
 
+a_vec = [0.998]
 for spin in a_vec:
     SNR_Kerr_vec=[]
     SNR_AAK_vec=[]
@@ -310,7 +311,8 @@ for spin in a_vec:
                     index_of_x=5,
                     xtol=2e-12,
                     rtol=8.881784197001252e-16,
-                    bounds=[24,30]
+                    #bounds = None
+                    bounds=[25,28] # Good for M = 1e5, mu = 1
                 )
             else:
                 p_new = get_p_at_t(
