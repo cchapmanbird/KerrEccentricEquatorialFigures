@@ -2,6 +2,7 @@ import numpy as np
 import sys
 import os
 import argparse
+import logging
 
 sys.path.append(os.getcwd())
 
@@ -11,6 +12,10 @@ from few.trajectory.ode.flux import KerrEccEqFlux
 from few.utils.utility import get_p_at_t
 from few.waveform import GenerateEMRIWaveform
 
+from few import git_version
+
+git_commit = git_version.short_id
+
 import json
 
 if __name__ == "__main__":
@@ -19,7 +24,12 @@ if __name__ == "__main__":
         description="Timing tests for FastEMRIWaveforms.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--delta-t", help="time step", type=float, default=10.0)
+    parser.add_argument(
+        "--delta-t",
+        help="Turn on iteration over sample rate",
+        action="store_true",
+        default=False,
+    )
     parser.add_argument(
         "-f",
         "--filename",
@@ -31,7 +41,10 @@ if __name__ == "__main__":
         "--duration", help="signal duration in years", type=float, default=1.0
     )
     parser.add_argument(
-        "--epsilon", help="mode threshold cutoff", type=float, default=1e-2
+        "--epsilon",
+        help="Turn on iteration over mode threshold",
+        action="store_true",
+        default=False,
     )
     parser.add_argument(
         "--iterations",
@@ -42,9 +55,16 @@ if __name__ == "__main__":
     parser.add_argument(
         "-v",
         "--verbose",
-        help="Turn verbosity on/off",
+        help="Turn on print functions",
         action="store_true",
         default=False,
+    )
+    parser.add_argument(
+        "-l",
+        "--logging-output",
+        help="filename for logging output",
+        type=str,
+        default="timing_output",
     )
     parser.add_argument(
         "-g",
@@ -69,26 +89,32 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     iterations = args.iterations
-    dt = args.delta_t  # time interval
     duration = args.duration
     output_filename = args.filename + ".json"
+    logging_filename = args.logging_output + ".log"
 
-    waveform_kwargs = {
-        "T": duration,
-        "dt": dt,
-        "eps": args.epsilon,
-    }
+    logger = logging.getLogger("timing_tests")
+    logger.setLevel(logging.INFO)
+
+    for log_name, log_obj in logging.Logger.manager.loggerDict.items():
+        if log_name != "timing_tests":
+            log_obj.disabled = True
+
+    logging.basicConfig(
+        filename=logging_filename, encoding="utf-8", level=logging.INFO, filemode="w"
+    )
+
+    metadata_string = (
+        f"Running FEW timing test on {git_commit}:"
+        + f"\n\toutput filename: {output_filename}"
+        + f"\n\titerations: {iterations}"
+        + f"\n\tduration: {duration}"
+    )
+
+    logging.info(metadata_string)
 
     if args.verbose:
-        print(
-            (
-                "Running FEW timing test"
-                + f"\noutput filename: {output_filename},"
-                + f"\niterations: {iterations},"
-                + f"\ndelta_t: {dt},"
-                + f"\nduration: {duration}"
-            )
-        )
+        print(metadata_string)
 
     # produce sensitivity function
     traj_module = EMRIInspiral(func=KerrEccEqFlux)
@@ -152,8 +178,8 @@ if __name__ == "__main__":
             emri_injection_params[4],
             1.0,
         ],
-        index_of_p=3,
         index_of_a=2,
+        index_of_p=3,
         index_of_e=4,
         index_of_x=5,
         traj_kwargs={},
@@ -161,21 +187,16 @@ if __name__ == "__main__":
         rtol=8.881784197001252e-6,
     )
 
-    # run things once to cache, this will sometimes take a few seconds
-    few_gen(*emri_injection_params, **waveform_kwargs)
-
-    timing_results = []
-
     # check to generate random parameters
     if args.generate_parameters:
+        logging.info(f"Generating {args.nsamples} parameters with seed {args.seed}.")
         from timing_utils import gen_parameters
 
         parameter_list, flist = gen_parameters(
             args.nsamples, duration, seed_in=args.seed, verbose=args.verbose
         )
-        print(parameter_list)
-        print(flist)
     else:
+        logging.info("Running with default parameters.")
         parameter_list = []
         # create a list of input parameters
         # ranging over mass_1 and eccentricity values
@@ -198,23 +219,32 @@ if __name__ == "__main__":
                 )
                 parameter_list.append(temp.copy())
 
+    waveform_kwargs_base = {
+        "T": duration,
+        "dt": 10.0,
+        "eps": 1e-2,
+    }
+
+    if args.delta_t:
+        logging.info("Iterating over various sample rates.")
+    else:
+        logging.info(f"Running with default delta_t = {waveform_kwargs_base['dt']}")
+
+    if args.epsilon:
+        logging.info("Iterating over mode threshold.")
+    else:
+        logging.info(f"Running with default epsilon = {waveform_kwargs_base['eps']}")
+
     timing_results = time_full_waveform_generation(
         few_gen,
         td_gen,
         parameter_list,
-        waveform_kwargs,
+        waveform_kwargs_base,
         iterations=iterations,
         verbose=args.verbose,
+        vary_delta_t=args.delta_t,
+        vary_epsilon=args.epsilon,
     )
 
-    output = {
-        "metadata": {
-            "duration": duration,
-            "delta_t": dt,
-            "iterations": iterations,
-            "epsilon": args.epsilon,
-        },
-        "results": timing_results.copy(),
-    }
-
-    json.dump(output, open(output_filename, "w"), indent=4)
+    logging.info(f"Outputing results to {output_filename}.")
+    json.dump(timing_results, open(output_filename, "w"), indent=4)
