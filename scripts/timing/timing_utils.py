@@ -1,5 +1,5 @@
 import numpy as np
-import time
+import timeit
 from tqdm import tqdm
 from numpy.random import seed, uniform
 
@@ -7,35 +7,46 @@ from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode.flux import KerrEccEqFlux
 from few.utils.utility import get_p_at_t
 
+
 def get_parameter_to_index_mapping():
 
     return {
-            "mass_1": 0,
-            "mass_2": 1,
-            "spin": 2,
-            "p0": 3,
-            "e0": 4,
-            "x0": 5,
-            "dist": 6,
-            "qS": 7,
-            "phiS": 8,
-            "qK": 9,
-            "phiK": 10,
-            "Phi_phi0": 11,
-            "Phi_theta0": 12,
-            "Phi_r0": 13
-        }
+        "mass_1": 0,
+        "mass_2": 1,
+        "spin": 2,
+        "p0": 3,
+        "e0": 4,
+        "x0": 5,
+        "dist": 6,
+        "qS": 7,
+        "phiS": 8,
+        "qK": 9,
+        "phiK": 10,
+        "Phi_phi0": 11,
+        "Phi_theta0": 12,
+        "Phi_r0": 13,
+    }
 
 
-def transform_masses(log_mass1, log_mass_ratio):
+def transform_masses(log_10_mass1, log_10_mass_ratio):
     # here mass_ratio is defined mass_2 / mass_1
-    mass_1 = 10**log_mass1
-    mass_ratio = 10**log_mass_ratio
+    mass_1 = 10**log_10_mass1
+    mass_ratio = 10**log_10_mass_ratio
     mass_2 = mass_ratio * mass_1
     return mass_1, mass_2
 
 
-def gen_parameters(N_SAMPLES, duration, seed_in=314159, verbose=False):
+def gen_parameters(
+    N_SAMPLES, duration, seed_in=314159, verbose=False, exact_length=True
+):
+    # get_p_at_t can fail for uniform priors, so if exact_length is specified then we
+    # overdraw samples and only generate a number of paraeters until we are at the end
+
+    if exact_length:
+        # should be enough to guarantee the full N_SAMPLES is generated
+        _n_samples = 2 * N_SAMPLES
+    else:
+        _n_samples = N_SAMPLES
 
     traj_module = EMRIInspiral(func=KerrEccEqFlux)
 
@@ -49,7 +60,7 @@ def gen_parameters(N_SAMPLES, duration, seed_in=314159, verbose=False):
     ).T
 
     seed(seed_in)
-    samples = uniform(low=prior_ranges[0], high=prior_ranges[1], size=(N_SAMPLES, 4))
+    samples = uniform(low=prior_ranges[0], high=prior_ranges[1], size=(_n_samples, 4))
 
     x0 = 1.0  # will be ignored in Schwarzschild waveform
     qK = np.pi / 3  # polar spin angle
@@ -82,6 +93,8 @@ def gen_parameters(N_SAMPLES, duration, seed_in=314159, verbose=False):
     output_params_list = []
     failed_params_list = []
 
+    successful_params = 0
+
     for i, (log_10_m1, log_10_eta, spin, ecc) in enumerate(samples):
 
         mass_1, mass_2 = transform_masses(log_10_m1, log_10_eta)
@@ -96,9 +109,6 @@ def gen_parameters(N_SAMPLES, duration, seed_in=314159, verbose=False):
             updated_params[1] = mass_2
             updated_params[2] = spin
             updated_params[4] = ecc
-
-
-            print(updated_params)
 
             updated_params[3] = get_p_at_t(
                 traj_module,
@@ -120,8 +130,14 @@ def gen_parameters(N_SAMPLES, duration, seed_in=314159, verbose=False):
             )
 
             output_params_list.append(updated_params.copy())
+            successful_params += 1
         except ValueError:
             failed_params_list.append([mass_1, mass_2, spin, ecc, duration])
+
+        # this will break the loop if we have oversampled and request a specific
+        # number of samples
+        if successful_params == N_SAMPLES:
+            break
 
     return output_params_list, failed_params_list
 
@@ -131,11 +147,12 @@ def time_full_waveform_generation(
     fd_waveform_func,
     td_waveform_func,
     input_params,
-    waveform_kwargs,
+    waveform_kwargs_base,
     iterations=10,
     duration=1.0,
-    delta_t=5.0,
     verbose=False,
+    vary_delta_t=False,
+    vary_epsilon=False,
 ):
     """
     Times the FD and TD waveform generation for different input parameters.
@@ -153,36 +170,70 @@ def time_full_waveform_generation(
     """
     results = []
 
+    dt_list = [5.0, 10.0, 15.0]
+    eps_list = [1e-2, 1e-3, 1e-4]
+
+    # run things once to cache, this will sometimes take a few seconds
+    fd_waveform_func(*input_params[0], **waveform_kwargs_base)
+
     if verbose:
         iterator = tqdm(input_params, total=len(input_params))
     else:
         iterator = input_params
 
+    if vary_delta_t:
+        dt_list_to_use = dt_list
+    else:
+        dt_list_to_use = [waveform_kwargs_base["dt"]]
+
+    if vary_epsilon:
+        eps_list_to_use = eps_list
+    else:
+        eps_list_to_use = [waveform_kwargs_base["eps"]]
+
     for params in iterator:
-        # Time FD waveform generation
-        start_time = time.time()
-        for _ in range(iterations):
-            fd_waveform_func(*params, **waveform_kwargs)
+        internal_param_list = []
+        for dt in dt_list_to_use:
+            for eps in eps_list_to_use:
+                wvf_kwargs = waveform_kwargs_base.copy()
+                wvf_kwargs.update({"dt": dt, "eps": eps})
+                # Time FD waveform generation
+                fd_start_time = timeit.default_timer()
+                for _ in range(iterations):
+                    fd_waveform_func(*params, **wvf_kwargs)
 
-        fd_time = (time.time() - start_time) / iterations
+                fd_end_time = timeit.default_timer()
 
-        # Time TD waveform generation
-        start_time = time.time()
-        for _ in range(iterations):
-            td_waveform_func(*params, **waveform_kwargs)
+                fd_time = (fd_end_time - fd_start_time) / iterations
 
-        td_time = (time.time() - start_time) / iterations
+                # Time TD waveform generation
+                td_start_time = timeit.default_timer()
+                for _ in range(iterations):
+                    td_waveform_func(*params, **wvf_kwargs)
+                    
+                td_end_time = timeit.default_timer()
+
+                td_time = (td_end_time - td_start_time) / iterations
+
+                internal_results_dict = {
+                    "dt": wvf_kwargs["dt"],
+                    "eps": wvf_kwargs["eps"],
+                    "fd_timing": fd_time,
+                    "td_timing": td_time,
+                }
+
+                internal_param_list.append(internal_results_dict.copy())
 
         # Store the results
         key_map = get_parameter_to_index_mapping()
-        result = {k:params[i] for k,i in key_map.items()}
-        result.update({
-            "duration": duration,
-            "delta_t": delta_t,
-            "iterations": iterations,
-            "fd_time": fd_time,
-            "td_time": td_time,
-        })
+        result = dict(parameters={k: params[i] for k, i in key_map.items()})
+        result.update(
+            {
+                "duration": duration,
+                "iterations": iterations,
+                "timing_results": internal_param_list.copy(),
+            }
+        )
         results.append(result.copy())
 
     return results
