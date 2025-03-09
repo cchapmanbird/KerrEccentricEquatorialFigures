@@ -1,5 +1,5 @@
 import numpy as np
-import time
+import timeit
 from tqdm import tqdm
 from numpy.random import seed, uniform
 
@@ -36,7 +36,17 @@ def transform_masses(log_10_mass1, log_10_mass_ratio):
     return mass_1, mass_2
 
 
-def gen_parameters(N_SAMPLES, duration, seed_in=314159, verbose=False):
+def gen_parameters(
+    N_SAMPLES, duration, seed_in=314159, verbose=False, exact_length=True
+):
+    # get_p_at_t can fail for uniform priors, so if exact_length is specified then we
+    # overdraw samples and only generate a number of paraeters until we are at the end
+
+    if exact_length:
+        # should be enough to guarantee the full N_SAMPLES is generated
+        _n_samples = 2 * N_SAMPLES
+    else:
+        _n_samples = N_SAMPLES
 
     traj_module = EMRIInspiral(func=KerrEccEqFlux)
 
@@ -50,7 +60,7 @@ def gen_parameters(N_SAMPLES, duration, seed_in=314159, verbose=False):
     ).T
 
     seed(seed_in)
-    samples = uniform(low=prior_ranges[0], high=prior_ranges[1], size=(N_SAMPLES, 4))
+    samples = uniform(low=prior_ranges[0], high=prior_ranges[1], size=(_n_samples, 4))
 
     x0 = 1.0  # will be ignored in Schwarzschild waveform
     qK = np.pi / 3  # polar spin angle
@@ -82,6 +92,8 @@ def gen_parameters(N_SAMPLES, duration, seed_in=314159, verbose=False):
 
     output_params_list = []
     failed_params_list = []
+
+    successful_params = 0
 
     for i, (log_10_m1, log_10_eta, spin, ecc) in enumerate(samples):
 
@@ -118,8 +130,14 @@ def gen_parameters(N_SAMPLES, duration, seed_in=314159, verbose=False):
             )
 
             output_params_list.append(updated_params.copy())
+            successful_params += 1
         except ValueError:
             failed_params_list.append([mass_1, mass_2, spin, ecc, duration])
+
+        # this will break the loop if we have oversampled and request a specific
+        # number of samples
+        if successful_params == N_SAMPLES:
+            break
 
     return output_params_list, failed_params_list
 
@@ -180,18 +198,22 @@ def time_full_waveform_generation(
                 wvf_kwargs = waveform_kwargs_base.copy()
                 wvf_kwargs.update({"dt": dt, "eps": eps})
                 # Time FD waveform generation
-                start_time = time.time()
+                fd_start_time = timeit.default_timer()
                 for _ in range(iterations):
                     fd_waveform_func(*params, **wvf_kwargs)
 
-                fd_time = (time.time() - start_time) / iterations
+                fd_end_time = timeit.default_timer()
+
+                fd_time = (fd_end_time - fd_start_time) / iterations
 
                 # Time TD waveform generation
-                start_time = time.time()
+                td_start_time = timeit.default_timer()
                 for _ in range(iterations):
                     td_waveform_func(*params, **wvf_kwargs)
+                    
+                td_end_time = timeit.default_timer()
 
-                td_time = (time.time() - start_time) / iterations
+                td_time = (td_end_time - td_start_time) / iterations
 
                 internal_results_dict = {
                     "dt": wvf_kwargs["dt"],
