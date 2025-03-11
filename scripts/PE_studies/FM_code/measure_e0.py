@@ -66,6 +66,17 @@ t0 = 20000.0  # throw away on both ends when our orbital information is weird
 TDI_channels = ['TDIA','TDIE']
 N_channels = len(TDI_channels)
 
+class transf_log_e_wave():
+    def __init__(self, base_wave):
+        self.base_wave = base_wave
+    def __call__(self, *args, **kwargs):
+        args = list(args)
+        args[4] = np.exp(args[4]) #index of eccentricity on the FEW waveform call
+        return self.base_wave(*args, **kwargs)
+    def __getattr__(self, name):
+        # Forward attribute access to base_wave
+        return getattr(self.base_wave, name)
+
 def noise_PSD_AE(f, TDI = 'TDI2'):
     """
     Inputs: Frequency f [Hz]
@@ -196,9 +207,7 @@ params = [M, mu, a, p0, e0, 1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0,
 print("Running the truth waveform")
 
 Kerr_TDI_waveform = EMRI_TDI_Model(*params)
-# def new_func(*params, **kwargs):
-#     output = EMRI_TDI_Model(*params, **kwargs)
-#     check_nan = cp.sum(cp.isnan(output)kkk
+
 # Taper and then zero_pad signal
 Kerr_FEW_TDI_pad = [zero_pad(Kerr_TDI_waveform[i]) for i in range(N_channels)]
 
@@ -243,30 +252,36 @@ if MAKE_PLOT == True:
 param_names = ['M','mu','a','p0','e0','dist','qS','phiS','qK','phiK','Phi_phi0','Phi_r0']
 output_dir = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/PE_studies/FM_code/FM_output"
 
+breakpoint()
 
-# delta = {'M': 1e-2, 'mu': 6.158482110660267e-08, 'a': 2.0484467003036454e-08, 
-#         'p0': 1.4388898580034613e-08, 'e0': 5.4483966567803533e-08, 'dist': 0.0, 
-#         'qS': 0.00021406661993596975, 'phiS': 6.546713737402235e-06, 'qK': 0.00011507599106301309, 
-#         'phiK': 8.562664797438793e-05, 'Phi_phi0': 1e-7, 'Phi_r0': 1e-7}
-# delta =  {'M': 0.0018329807108324375, 'mu': 3.3598182862837814e-08, 'a': 6.096897289553686e-09, 'p0': 8.86137744972479e-08, 'e0': 7.90186524179282e-09, 'dist': 0.0, 'qS': 0.00021406661993596975, 'phiS': 6.546713737402235e-06, 'qK': 3.866344190857403e-05, 'phiK': 8.562664797438793e-05, 'Phi_phi0': 4.138276162229581e-07, 'Phi_r0': 1.8475446331980809e-06}
-# delta = {'M': 0.03359818286283781, 'mu': 6.951927961775605e-07, 'a': 6.146165146438964e-09, 'p0': 1.4738087278964292e-07, 'e0': 6.113412025222568e-07, 'dist': 0.0, 'qS': 0.00021406661993596975, 'phiS': 2.4829656973377497e-07, 'qK': 1.29902139135098e-05, 'phiK': 9.665860477143506e-06, 'Phi_phi0': 0.00254854997140627, 'Phi_r0': 0.0012843997196158193}
-fish = StableEMRIFisher(M, mu, a, p0, e0, 1.0, dist, qS, phiS, qK, phiK,
-                        Phi_phi0, Phi_theta0, Phi_r0, 
-                        dt=delta_t, T=T, EMRI_waveform_gen=EMRI_TDI_Model, 
-                        noise_kwargs=dict(TDI="TDI2"), 
-                        param_names=param_names, stats_for_nerds=True, use_gpu=use_gpu, 
-                        der_order=4., Ndelta=20, filename=output_dir,
-                        deltas = None, #delta,
-                        # log_e = log_e, # useful for sources close to zero eccentricity
-                        CovEllipse=False, # will return the covariance and plot it
-                        stability_plot=True, # activate if unsure about the stability of the deltas
-                        window=None # addition of the window to avoid leakage
-                        )
+EMRI_TDI_log_e_Model=transf_log_e_wave(EMRI_TDI_Model) 
 
-# Compute SNR and FMs
-SNR = fish.SNRcalc_SEF()
-fim = fish()
-cov = np.linalg.inv(fim)
-FM_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/PE_studies/Data/Cov_Matrices/FM_cov_matrices/"
-np.save(FM_direc + name_file + ".npy",cov)
+eccentricity_vec = np.asarray([1e-1,1e-2,1e-3,1e-4,1e-5,1e-6,1e-7])
+
+e0_from_FM = []
+for e0 in eccentricity_vec:
+    fish = StableEMRIFisher(M, mu, a, p0, e0, 1.0, dist, qS, phiS, qK, phiK,
+                            Phi_phi0, Phi_theta0, Phi_r0, 
+                            dt=delta_t, T=T, EMRI_waveform_gen=EMRI_TDI_log_e_Model, 
+                            noise_kwargs=dict(TDI="TDI2"), 
+                            param_names=param_names, stats_for_nerds=True, use_gpu=use_gpu, 
+                            der_order=4., Ndelta=20, filename=output_dir,
+                            deltas = None, #delta,
+                            log_e = True, # useful for sources close to zero eccentricity
+                            CovEllipse=False, # will return the covariance and plot it
+                            stability_plot=True, # activate if unsure about the stability of the deltas
+                            window=None # addition of the window to avoid leakage
+                            )
+
+    # Compute SNR and FMs
+    SNR = fish.SNRcalc_SEF()
+    fim = fish()
+    cov = np.linalg.inv(fim)
+    diag_vals = np.sqrt(np.diag(cov))
+    e0_from_FM.append(diag_vals[4])
+
+    FM_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/PE_studies/Data/Cov_Matrices/FM_cov_matrices/measurability_e0/"
+    np.save(FM_direc + f"FM_e0_{e0}.npy",cov)
+    np.save(FM_direc + f"e0_from_FM.npy", e0_from_FM)
+
 breakpoint()
