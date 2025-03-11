@@ -1,0 +1,8 @@
+INFO:root:Running FEW timing test on ea5541b:
+	output filename: timing_test_results.json
+	iterations: 3
+	duration: 1.0
+INFO:root:Generating 2000 parameters with seed 314159.
+INFO:root:Iterating over various sample rates.
+INFO:root:Iterating over mode threshold.
+INFO:root:Outputing results to timing_test_results.json.
