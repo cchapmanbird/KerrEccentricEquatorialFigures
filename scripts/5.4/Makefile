@@ -4,10 +4,11 @@ T = 2
 QS = 1e-5
 E0S = 0.5
 SPIN = 0.99
-NAME = "horizon"
+NAME = "27_11_2024"
 
 # Define the targets
-all: run_spin run_eccentricity
+#all: run_eccentricity #run_spin
+all: kerr_aak_spin
 
 kerr_eccentricity:
 	@nohup $(PYTHON) produce_horizon_data.py -outname $(NAME) -Tobs $(T) -t kerr -wf kerr -qs $(QS) > logfiles/kerr_eccentricity.out &

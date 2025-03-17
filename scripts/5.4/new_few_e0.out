@@ -1,0 +1,39 @@
+PID: 575645
+Using GPU 3
+generating different e0 lines for M grid
+Data already exists, skipping
+done
+Data already exists, skipping
+done
+Generating data
+  0%|          | 0/4 [00:00<?, ?it/s]  0%|          | 0/4 [16:16<?, ?it/s]
+e0 0.1
+M, q, spin, e0, x0 900000.0000000007 1e-05 0.99 0.1 1.0
+Traceback (most recent call last):
+  File "/data/asantini/emris/eccentric_kerr/KerrEccentricEquatorialFigures/scripts/5.4/produce_horizon_data.py", line 445, in <module>
+    generate_data(
+  File "/data/asantini/emris/eccentric_kerr/KerrEccentricEquatorialFigures/scripts/5.4/produce_horizon_data.py", line 326, in generate_data
+    snr_here = get_snr_avg(M, mu, spin, e0, x0, Tobs, avg_n=300, emri_kwargs=emri_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/asantini/emris/eccentric_kerr/KerrEccentricEquatorialFigures/scripts/5.4/produce_horizon_data.py", line 286, in get_snr_avg
+    snr_here = np.mean(np.array([get_snr(inp, emri_kwargs) for inp in injection]))
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/asantini/emris/eccentric_kerr/KerrEccentricEquatorialFigures/scripts/5.4/produce_horizon_data.py", line 244, in get_snr
+    return snr([data_channels[0], data_channels[1]], **inner_kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/asantini/packages/LISAanalysistools/lisatools/diagnostic.py", line 387, in snr
+    opt_snr = np.sqrt(inner_product(sig1, sig1, *args, **kwargs).real)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/asantini/packages/LISAanalysistools/lisatools/diagnostic.py", line 102, in inner_product
+    psd = SensitivityMatrix(freqs, [psd], *psd_args, **psd_kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/asantini/packages/LISAanalysistools/lisatools/sensitivity.py", line 643, in __init__
+    self.sens_mat = sens_mat
+    ^^^^^^^^^^^^^
+  File "/data/asantini/packages/LISAanalysistools/lisatools/sensitivity.py", line 713, in sens_mat
+    new_out[i] = get_sensitivity(
+                 ^^^^^^^^^^^^^^^^
+  File "/data/asantini/packages/LISAanalysistools/lisatools/sensitivity.py", line 957, in get_sensitivity
+    PSD = sensitivity.get_Sn(f, *args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'AET2SensitivityMatrix' has no attribute 'get_Sn'

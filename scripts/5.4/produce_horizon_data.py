@@ -1,3 +1,6 @@
+# Description: Script to generate horizon data for a given set of parameters
+# python produce_horizon_data.py -Tobs 2.0 -dt 5.0 -t kerr kerr pn5 -wf kerr aak aak -outname new_few -grids e0 M -qs 1e-5
+
 import argparse
 import os
 import GPUtil
@@ -6,12 +9,12 @@ os.system("OMP_NUM_THREADS=2")
 print("PID:",os.getpid())
 import time
 parser = argparse.ArgumentParser(description="horizon redshift")
+parser.add_argument("-dev", "--dev", help="GPU device", required=False, type=int, default=None)
 parser.add_argument("-Tobs", "--Tobs", help="Observation Time in years", required=False, default=1.0, type=float)
 parser.add_argument("-Ms", "--Ms", help="masses", required=False, nargs='*', default=1e6, type=float)
 parser.add_argument("-qs", "--qs", help="mass ratio", required=False, nargs='*', default=5e-5, type=float)
 parser.add_argument("-e0s", "--e0s", help="initial eccentricity", required=False, nargs='*', default=0.0, type=float)
 parser.add_argument("-spins", "--spins", help="dimensionless spin", required=False, nargs='*', default=0.99, type=float)
-parser.add_argument("-x0", "--x0", help="prograde orbits", default=1.0, required=False, type=float)
 parser.add_argument("-dt", "--dt", help="sampling interval delta t", required=False, type=float, default=5.0)
 parser.add_argument("-SNR", "--SNR", help="SNR", required=False, type=float, default=20.0)
 parser.add_argument("-outname", "--outname", help="output name", required=False, type=str, default="")
@@ -22,7 +25,7 @@ parser.add_argument("-grids", "--grids", help="parameters to iterate over", requ
 
 args = vars(parser.parse_args())
 
-# dev = args['dev']
+dev = args['dev']
 
 # if dev is not None:
 #     os.system("CUDA_VISIBLE_DEVICES="+str(args['dev']))
@@ -40,8 +43,10 @@ from eryn.prior import ProbDistContainer, uniform_dist
 #sys.path.append('/data/asantini/emris/DirtyEMRI/DataAnalysis/LISAanalysistools/')
 
 from lisatools.diagnostic import *
-from lisatools.sensitivity import get_sensitivity
+from lisatools.sensitivity import get_sensitivity, A2TDISens, E2TDISens, T2TDISens
 from lisatools.detector import EqualArmlengthOrbits, ESAOrbits
+from lisatools.datacontainer import DataResidualArray
+from lisatools.analysiscontainer import AnalysisContainer
 
 from few.trajectory.ode.flux import SchwarzEccFlux, KerrEccEqFlux
 from few.trajectory.ode.pn5 import PN5
@@ -91,13 +96,16 @@ def get_free_gpus(n_gpus=1):
 try:
     import cupy as xp
     # set GPU device
-    free_gpus = get_free_gpus(n_gpus=1)
-    if not free_gpus:
-        gpu_available = False
+    if dev is None:
+        free_gpus = get_free_gpus(n_gpus=1)
+        if not free_gpus:
+            gpu_available = False
+        else:
+            dev = free_gpus[0]
     else:
-        os.system("CUDA_VISIBLE_DEVICES="+str(free_gpus[0]))
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(free_gpus[0])
-        print("Using GPU", free_gpus[0])
+        os.system("CUDA_VISIBLE_DEVICES="+str(dev))
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(dev)
+        print("Using GPU", dev)
         gpu_available = True
 
 except (ImportError, ModuleNotFoundError) as e:
@@ -161,7 +169,7 @@ def generate_data(
     N_obs = int(Tobs * YRSID_SI / dt) # may need to put "- 1" here because of real transform
     Tobs = (N_obs * dt) / YRSID_SI
 
-    tdi_gen ="1st generation"# "2nd generation"#
+    tdi_gen = "2nd generation" #"1st generation" or "2nd generation"
 
     order = 25  # interpolation order (should not change the result too much)
     orbits = EqualArmlengthOrbits(use_gpu=use_gpu) # ESAOrbits(use_gpu=use_gpu)
@@ -170,7 +178,7 @@ def generate_data(
         orbits=orbits,
         order=order,
         tdi=tdi_gen,
-        tdi_chan="AE",
+        tdi_chan="AET",
     )  # could do "AET
 
     index_lambda = 8
@@ -226,18 +234,14 @@ def generate_data(
     #                 psd_kwargs={'stochastic_params':(Tobs,)},
     #                 ) 
     
-    inner_kw = dict(dt=dt,psd="A1TDISens",psd_args=(),psd_kwargs={"stochastic_params": (Tobs,)},use_gpu=use_gpu) 
+    inner_kw = dict(dt=dt,psd="AET2SensitivityMatrix",psd_args=(),psd_kwargs={"stochastic_params": (Tobs,)})#,use_gpu=use_gpu) 
+    inner_kw = dict(dt=dt,psd=[A2TDISens, E2TDISens, T2TDISens], psd_args=(),psd_kwargs={"stochastic_params": (Tobs,)})
     
     def get_snr(inp, emri_kwargs={}):
-        #print('p', inp)
-        
-        #breakpoint()
         data_channels = resp_gen(*inp, kwargs=emri_kwargs)
+
     
-        if use_gpu:
-            return snr([data_channels[0], data_channels[1]], **inner_kw).get()
-        else:
-            return snr([data_channels[0], data_channels[1]], **inner_kw)
+        return snr([data_channels[0], data_channels[1], data_channels[2]], **inner_kw)
 
         
     
@@ -263,7 +267,8 @@ def generate_data(
 
         ffth = xp.fft.rfft(data_channels[0])*dt
         fft_freq = xp.fft.rfftfreq(len(data_channels[0]),dt)
-        PSD_arr = get_sensitivity(fft_freq, sens_fn=inner_kw['psd'], **inner_kw['psd_kwargs'])
+
+        PSD_arr = get_sensitivity(fft_freq, sens_fn='A2TDISens', **inner_kw['psd_kwargs'])
         plt.figure()
         try:
             plt.plot(fft_freq.get(), (xp.abs(ffth)**2).get())
@@ -411,7 +416,7 @@ if __name__ == '__main__':
             inspiral_kwargs=inspiral_kwargs,
             sum_kwargs=sum_kwargs,
             return_list=False,
-            use_gpu=use_gpu,
+            force_backend=backend,
             frame="detector"
         )
         waveform_kwargs = {

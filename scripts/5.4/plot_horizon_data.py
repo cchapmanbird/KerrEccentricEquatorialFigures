@@ -1,5 +1,5 @@
 # plot horizon data for the Kerr eccentric equatorial case
-# python plot_horizon_data.py -Tobs 2.0 -q 1.0e-5 -spin 0.99 -zaxis e0 -base horizon
+# python plot_horizon_data.py -Tobs 2.0 -q 1.0e-5 -spin 0.99 -zaxis e0 -base 27_11_2024
 
 import numpy as np
 import matplotlib.pyplot as plt

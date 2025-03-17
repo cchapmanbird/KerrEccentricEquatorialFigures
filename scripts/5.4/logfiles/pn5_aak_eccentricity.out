@@ -1,0 +1,30 @@
+PID: 2843376
+Using GPU 1
+generating different e0 lines for M grid
+Generating data
+  0%|          | 0/4 [00:00<?, ?it/s]  0%|          | 0/4 [00:13<?, ?it/s]
+e0 0.1
+M, q, spin, e0, x0 900000.0000000007 1e-05 0.99 0.1 1.0
+Traceback (most recent call last):
+  File "/data/asantini/emris/eccentric_kerr/KerrEccentricEquatorialFigures/scripts/5.4/produce_horizon_data.py", line 437, in <module>
+    generate_data(
+  File "/data/asantini/emris/eccentric_kerr/KerrEccentricEquatorialFigures/scripts/5.4/produce_horizon_data.py", line 322, in generate_data
+    snr_here = get_snr_avg(M, mu, spin, e0, x0, Tobs, avg_n=300, emri_kwargs=emri_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/asantini/emris/eccentric_kerr/KerrEccentricEquatorialFigures/scripts/5.4/produce_horizon_data.py", line 263, in get_snr_avg
+    data_channels = resp_gen(*injection[0], kwargs=emri_kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/asantini/emris/eccentric_kerr/KerrEccentricEquatorialFigures/scripts/5.4/produce_horizon_data.py", line 138, in __call__
+    wave = self.wave_gen(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/asantini/packages/lisa-on-gpu/fastlisaresponse/response.py", line 897, in __call__
+    h = self.waveform_gen(*args, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/asantini/packages/FastEMRIWaveforms/few/waveform/waveform.py", line 330, in __call__
+    self.waveform_generator(*args, **{**initial_phases, **kwargs})
+  File "/data/asantini/packages/FastEMRIWaveforms/few/waveform/base.py", line 708, in __call__
+    waveform = self.create_waveform(
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/asantini/packages/FastEMRIWaveforms/few/summation/base.py", line 144, in __call__
+    self.sum(t, *args, dt=dt, **kwargs)
+TypeError: KerrAAKSummation.sum() missing 4 required positional arguments: 'phiS', 'qK', 'phiK', and 'nmodes'
