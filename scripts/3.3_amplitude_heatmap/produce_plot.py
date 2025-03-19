@@ -21,7 +21,7 @@ nvec = f.attrs['nvec']
 pow_max = f.attrs['pow_max']
 amps_out = [f[f'amps_{i}'] for i in range(4)]
 
-fig = plt.figure(figsize=(6, 8), dpi=150)
+fig = plt.figure(figsize=(7, 8), dpi=150)
 
 plt.subplot(7, 9, (1, 18))
 plt.plot(tout[1], tout[2], c=cpal[0])
