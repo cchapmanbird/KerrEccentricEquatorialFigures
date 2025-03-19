@@ -24,9 +24,12 @@ wave_tf = 2 * np.fft.rfft(dt * tukey(samples_per_seg, alpha=1.)[None,:] * wave_p
 t_seg = np.arange(nseg) * tseg / YRSID_SI
 f_seg = np.fft.rfftfreq(samples_per_seg, d=dt)
 
+# vmax = 3e-24
+vmax = 5e-24
+
 plt.figure(figsize=(10, 9), dpi=200)
 plt.subplot(211)
-im = plt.pcolormesh(t_seg, f_seg, np.abs(wave_tf).T, shading='auto', cmap=cmap, vmax=0.005, rasterized=True)
+im = plt.pcolormesh(t_seg, f_seg, np.abs(wave_tf).T, shading='auto', cmap=cmap, vmax=vmax, rasterized=True)
 plt.yscale('log')
 plt.ylim(3e-4, 1e-1)
 plt.xlim(0,1)
@@ -56,7 +59,7 @@ t_seg = np.arange(nseg) * tseg / YRSID_SI
 f_seg = np.fft.rfftfreq(samples_per_seg, d=dt)
 
 plt.subplot(212)
-im2 = plt.pcolormesh(t_seg, f_seg, np.abs(wave_tf).T, shading='auto', cmap=cmap, vmax=0.005, rasterized=True)
+im2 = plt.pcolormesh(t_seg, f_seg, np.abs(wave_tf).T, shading='auto', cmap=cmap, vmax=vmax, rasterized=True)
 plt.ylabel('Frequency [Hz]', fontsize=16)
 # cb = plt.colorbar(im2, pad=0.02)
 # # make the colorbar tick labels bigger
@@ -73,13 +76,11 @@ plt.tight_layout()
 
 # One colorbar for both plots
 fig = plt.gcf()
-cbar_ax = fig.add_axes([1., 0.1, 0.02, 0.85])
+cbar_ax = fig.add_axes([1.01, 0.1, 0.02, 0.85])
 cb = fig.colorbar(im, cax=cbar_ax)
 # cb = plt.colorbar(im, pad=0.02)
 cb.ax.tick_params(labelsize=13)
-cb.set_label(label='Strain (source-frame)', size=14)
-
-
+cb.set_label(label='Gravitational-wave strain', size=14)
 
 
 plt.savefig("waveform_tf.pdf", bbox_inches='tight')
