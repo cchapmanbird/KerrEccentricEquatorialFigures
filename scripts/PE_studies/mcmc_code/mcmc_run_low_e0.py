@@ -330,7 +330,7 @@ data_f_AET = Kerr_TDI_fft + 0*noise_f_AET   # define the data
 
 ##===========================MCMC Settings============================
 
-iterations = 20000  # The number of steps to run of each walker
+iterations = 20_000  # The number of steps to run of each walker
 burnin = 0 # I always set burnin when I analyse my samples
 nwalkers = 50  #50 #members of the ensemble, like number of chains
 
@@ -427,9 +427,10 @@ if ntemps > 1:
 else:
     print("Value of starting log-likelihood points", llike(start[0])) 
 
+
 os.chdir('/work/scratch/data/burkeol/kerr_few_paper/low_e0_simulations/')
 # Low eccentricity result 
-fp = "low_e0_Kerr_M_1e6_mu_25_a_0p998_p0_10p628_e0_0p00001_SNR_50_dt_5_T_2.h5"
+fp = "low_e0_Kerr_M_1e6_mu_25_a_0p998_p0_10p628_e0_0p1_SNR_50_dt_5_T_2.h5"
 backend = HDFBackend(fp)
 
 
@@ -442,7 +443,7 @@ ensemble = EnsembleSampler(
                             tempering_kwargs=tempering_kwargs,  # Allow tempering!
                             moves = moves_stretch
                             )
-Reset_Backend = False # NOTE: CAREFUL HERE. ONLY TO USE IF WE RESTART RUNS!!!!
+Reset_Backend = True # NOTE: CAREFUL HERE. ONLY TO USE IF WE RESTART RUNS!!!!
 if Reset_Backend:
     os.remove(fp) # Manually get rid of backend
     backend = HDFBackend(fp) # Set up new backend
