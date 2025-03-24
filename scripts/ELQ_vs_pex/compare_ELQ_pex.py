@@ -2,7 +2,6 @@ import os
 import sys
 from tqdm import tqdm as tqdm
 
-import cupy as cp
 import numpy as np
 import time
 import matplotlib.pyplot as plt
@@ -14,6 +13,7 @@ from few.trajectory.ode import PN5, SchwarzEccFlux, KerrEccEqFlux
 
 from few.utils.utility import get_separatrix, get_p_at_t
 
+breakpoint()
 MAKE_PLOT = True
 
 
