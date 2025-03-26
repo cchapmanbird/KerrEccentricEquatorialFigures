@@ -101,9 +101,8 @@ for i, a_iter in enumerate(a_iter_list):
     pLSO_data_outer = get_separatrix(aval, e_data_outer.flatten(), 1).reshape(e_data_outer.shape)
     
     # Generate scatter plots
-    ax[i].scatter(p_data_outer - pLSO_data_outer, e_data_outer, c=timing_data_outer, norm ='log', vmax=time_max/60, rasterized=True)
-    pos = ax[i].scatter(p_data - pLSO_data, e_data, c=timing_data, norm ='log', vmax=time_max/60, rasterized=True)
-
+    ax[i].scatter(p_data_outer - pLSO_data_outer, e_data_outer, c=timing_data_outer, norm=LogNorm(), vmax=time_max/60, rasterized=True)
+    pos = ax[i].scatter(p_data - pLSO_data, e_data, c=timing_data, norm=LogNorm(), vmax=time_max/60, rasterized=True)
     # Set labels and ticks
     ax[i].set_title('$a={:.4f}$'.format(aval))
     if i == fig_num - 1:
