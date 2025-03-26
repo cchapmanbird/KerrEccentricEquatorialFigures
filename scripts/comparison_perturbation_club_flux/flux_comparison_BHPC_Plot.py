@@ -30,7 +30,7 @@ def plot_heatmaps(array,a,x):
     # Plot the pdot rel diff using scatter plot
     scatter1 = axes[0,0].scatter(deltap, e, c=z1, cmap='plasma',rasterized=True)
     axes[0,0].set_title(r'$ \log_{10} \left(| 1 - f_p^{FEW}/ f_p^{BHPC} | \right)$', fontsize=title_fontsize)
-    axes[0,0].set_xlabel(r'Ajusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
+    axes[0,0].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
     axes[0,0].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
     axes[0,0].tick_params(axis='both', which='major', labelsize=tick_fontsize)
@@ -39,7 +39,7 @@ def plot_heatmaps(array,a,x):
     # Plot the edot rel diff using scatter plot
     scatter2 = axes[0,1].scatter(deltap, e, c=z2, cmap='plasma',rasterized=True)
     axes[0,1].set_title(r'$ \log_{10} \left(| 1 - f_e^{FEW}/ f_e^{BHPC} | \right)$', fontsize=title_fontsize)
-    axes[0,1].set_xlabel(r'Ajusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
+    axes[0,1].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
     axes[0,1].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
     axes[0,1].tick_params(axis='both', which='major', labelsize=tick_fontsize)
