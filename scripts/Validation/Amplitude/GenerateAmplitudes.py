@@ -35,7 +35,7 @@ for p, e in zip(ps, es):
         ell, m, n = key
         amps_out[str(key)] = np.abs(val[0]-ampS_here[key][0])
         print(key, p, e)
-        print(f"diff: {amps_out[key]}")
+        print(f"diff: {amps_out[str(key)]}")
 
 # save dictionary to json
 with open('amplitude_diff.json', 'w') as f:
