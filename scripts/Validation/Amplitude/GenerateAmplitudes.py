@@ -33,10 +33,10 @@ for p, e in zip(ps, es):
     ampS_here = ampS(a, p, e, x, specific_modes=mode_selection)
     for key, val in amps_here.items():
         ell, m, n = key
-        amps_out[str(key)] = np.abs(val[0]-ampS_here[key][0])
+        amps_out[str(key)] = float(np.abs(val[0]-ampS_here[key][0]))
         print(key, p, e)
         print(f"diff: {amps_out[str(key)]}")
 
 # save dictionary to json
 with open('amplitude_diff.json', 'w') as f:
-    json.dump(amps_out, f, indent=4)
+    json.dump(amps_out, f)
