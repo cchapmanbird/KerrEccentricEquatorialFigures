@@ -9,8 +9,8 @@ traj = EMRIInspiral(func="KerrEccEqFlux")
 amp_module = AmpInterpKerrEccEq()
 ampS = AmpInterpSchwarzEcc()
 
-ps_vec = np.linspace(10, 40, 4)
-es_vec = np.linspace(0.01, 0.7, 4)
+ps_vec = np.linspace(8., 40, 10)
+es_vec = np.linspace(0.01, 0.7, 10)
 # create grid of parameters
 a = 0.0
 ps, es = np.meshgrid(ps_vec, es_vec)
