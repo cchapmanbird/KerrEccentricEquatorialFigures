@@ -2,41 +2,53 @@ from few.amplitude.ampinterp2d import AmpInterpKerrEccEq, AmpInterpSchwarzEcc
 from few.trajectory.inspiral import EMRIInspiral
 import numpy as np
 import h5py
-import json
 
-
-amps_out = {}
-# save dictionary to json
-with open('amplitude_diff.json', 'w') as f:
-    json.dump(amps_out, f, indent=4)
+amps_out = []
 
 traj = EMRIInspiral(func="KerrEccEqFlux")
 amp_module = AmpInterpKerrEccEq()
 ampS = AmpInterpSchwarzEcc()
 
-# pvals = np.array([8., 10., 20.0])
-# evals = np.array([0.1, 0.2, 0.6])
-ps = np.linspace(10, 40, 50)
-es = np.linspace(0.01, 0.7, 50)
-nmin = -10
-nmax = 10
-mode_selection = []
-for ell in range(2,3):
-    for m in range(-ell, ell+1):
-        for n in range(nmin, nmax+1):
-            mode_selection.append((ell, m, n))
-for p, e in zip(ps, es):
-    a = 0.0
-    x = 1.
+ps_vec = np.linspace(10, 40, 4)
+es_vec = np.linspace(0.01, 0.7, 4)
+# create grid of parameters
+a = 0.0
+ps, es = np.meshgrid(ps_vec, es_vec)
+ps = ps.flatten()
+es = es.flatten()
+xs = np.ones(len(ps))
 
-    amps_here = amp_module(a, p, e, x, specific_modes=mode_selection)
-    ampS_here = ampS(a, p, e, x, specific_modes=mode_selection)
+nmin = -3
+nmax = 3
+mode_selection = []
+lmin = 2
+lmax = 3
+for ell in range(lmin, lmax+1):
+    for m in range(-ell, ell + 1):
+        for n in range(nmin, nmax + 1):
+            mode_selection.append((ell, m, n))
+
+amps_here = amp_module(a, ps, es, xs, specific_modes=mode_selection)
+ampS_here = ampS(a, ps, es, xs, specific_modes=mode_selection)
+
+# amps_out.append(amp_arr)
+
+ellvec = np.arange(lmin, lmax + 1)
+mvec = np.arange(-lmax, lmax + 1)
+nvec = np.arange(nmin, nmax + 1)
+
+
+with h5py.File('amplitude_diff.h5', 'w') as f:
+    f.attrs['a'] = 0.0
+    f.attrs['pvals'] = ps_vec
+    f.attrs['evals'] = es_vec
+    f.attrs['ellvec'] = ellvec
+    f.attrs['mvec'] = mvec
+    f.attrs['nvec'] = nvec
+    
     for key, val in amps_here.items():
         ell, m, n = key
-        amps_out[str(key)] = float(np.abs(val[0]-ampS_here[key][0]))
-        print(key, p, e)
-        print(f"diff: {amps_out[str(key)]}")
-
-# save dictionary to json
-with open('amplitude_diff.json', 'w') as f:
-    json.dump(amps_out, f)
+        diff_amp = val - ampS_here[key]
+        f.create_dataset(f'amp_Kerr_{ell}{m}{n}', data=val.get())
+        f.create_dataset(f'amp_Schw_{ell}{m}{n}', data=ampS_here[key].get())
+        f.create_dataset(f'amp_diff_{ell}{m}{n}', data=diff_amp.get())
