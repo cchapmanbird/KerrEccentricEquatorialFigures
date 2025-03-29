@@ -41,7 +41,7 @@ with h5py.File('amplitude_diff.h5', 'r') as f:
                 ax1.set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
                 # ax1.set_title(rf'$| 1 - f_p^{{0PA}}/ f_p^{{{name}}} |$', fontsize=title_fontsize)
                 # ax1.set_title(f'Real of $A_{{{ell,m,n}}}$ l={ell}, m={m}, n={n}', fontsize=title_fontsize)
-                ax1.set_title(rf'$\log_{{10}}| \Im ( A_{{{name}}} -  A_{{{name}}} ) |$', fontsize=title_fontsize)
+                ax1.set_title(rf'$\log_{{10}}| \Im ( A^K_{{{name}}} -  A^S_{{{name}}} ) |$', fontsize=title_fontsize)
 
                 ax1.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
@@ -49,7 +49,7 @@ with h5py.File('amplitude_diff.h5', 'r') as f:
                 ax2.set_xlabel(r'Semilatus rectum $(p)$', fontsize=label_fontsize)
                 ax2.set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
                 # ax2.set_title(rf'$ \log_{{10}} \left(| 1 - f_e^{{0PA}}/ f_e^{{{name}}} | \right)$', fontsize=title_fontsize)
-                ax2.set_title(rf'$\log_{{10}}| \Re (A_{{{name}}} -  A_{{{name}}} ) |$', fontsize=title_fontsize)
+                ax2.set_title(rf'$\log_{{10}}| \Re (A^K_{{{name}}} -  A^S_{{{name}}} ) |$', fontsize=title_fontsize)
                 ax2.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
                 cbar = fig.colorbar(contourf1, ax=ax1, orientation='vertical', fraction=0.2, pad=0.01, ticks=level_list)
