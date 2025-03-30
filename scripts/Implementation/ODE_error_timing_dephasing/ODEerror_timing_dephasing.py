@@ -8,6 +8,12 @@ from few.trajectory.ode import KerrEccEqFlux, PN5, SchwarzEccFlux
 from few.utils.globals import get_logger
 from few.utils.utility import get_p_at_t
 from scipy.interpolate import CubicSpline
+
+plt.rcParams["text.usetex"] = True
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["font.serif"] = ["Computer Modern"]
+
+
 def initialize_parameters(traj, Ntest, massratio, Tobs=1.0, seed=42):
     np.random.seed(seed)
     evec = np.random.uniform(0.0, 0.7, Ntest)
@@ -72,7 +78,7 @@ def plot_results(err_vec, phase_difference, timing, N_points, Ntest, mass_ratio)
     plt.semilogx(err_vec, median_timing, '-o', label=f'mass ratio={mass_ratio}')
     plt.fill_between(err_vec, median_timing - sigma_timing, median_timing + sigma_timing, alpha=0.3)
     # plt.semilogx(err_vec, timing, '-o', label=f'mass ratio={mass_ratio}')
-    plt.ylabel('Timing [seconds]')
+    plt.ylabel('Timing [s]')
 
     # Plot 3: Mean number of points
     plt.subplot(3, 1, 3)
@@ -83,6 +89,7 @@ def plot_results(err_vec, phase_difference, timing, N_points, Ntest, mass_ratio)
     # plt.semilogx(err_vec, N_points, '-o', label=f'mass ratio={mass_ratio}')
     plt.xlabel('Error ODE')
     plt.ylabel('Number of Points')
+    plt.tight_layout()
 
     plt.savefig(f'Trajectory_timing_ODEerror_dephasing.png')
 
