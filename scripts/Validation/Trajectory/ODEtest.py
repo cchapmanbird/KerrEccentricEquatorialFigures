@@ -14,9 +14,9 @@ cpal = color_palette("colorblind", 4)
 plt.rcParams["text.usetex"] = True
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["Computer Modern"]
-label_fontsize = 14
-tick_fontsize = 14
-title_fontsize = 16
+label_fontsize = 16
+tick_fontsize = 16
+title_fontsize = 18
 
 def initialize_parameters(traj, Ntest, massratio, Tobs=1.0, seed=42):
     np.random.seed(seed)

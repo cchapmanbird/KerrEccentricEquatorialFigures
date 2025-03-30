@@ -6,9 +6,9 @@ import h5py
 plt.rcParams["text.usetex"] = True
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["Computer Modern"]
-label_fontsize = 14
-tick_fontsize = 14
-title_fontsize = 16
+label_fontsize = 16
+tick_fontsize = 16
+title_fontsize = 18
 cpal = color_palette("colorblind", 4)
 
 f = h5py.File("data.h5", "r")
