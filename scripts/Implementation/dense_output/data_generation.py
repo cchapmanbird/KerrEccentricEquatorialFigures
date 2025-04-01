@@ -18,8 +18,7 @@ pars = [
 ]
 
 T = 1.
-dt = 50.  # The smaller the better, but strongly impacts the runtime. This should be fine.
-
+dt = 50.
 pars[3] = get_p_at_t(tr, T, [pars[0], pars[1], pars[2], pars[4], pars[5]])
 
 T = 0.999  # Cut off the very last part of the inspiral for plot dynamic range purposes
