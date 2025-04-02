@@ -1,5 +1,5 @@
 # Description: Script to generate horizon data for a given set of parameters
-# python produce_horizon_data.py -Tobs 2.0 -dt 5.0 -t kerr kerr pn5 -wf kerr aak aak -outname new_few -grids e0 M -qs 1e-5
+# python produce_horizon_data.py -Tobs 2.0 -dt 5.0 -t kerr kerr pn5 -wf kerr aak aak -outname test -grids e0 M -qs 1e-5 --tdi2 --foreground --esaorbits
 
 import argparse
 import os
@@ -9,6 +9,11 @@ os.system("OMP_NUM_THREADS=2")
 print("PID:",os.getpid())
 import time
 parser = argparse.ArgumentParser(description="horizon redshift")
+parser.add_argument('--tdi2', action='store_true', default=False, help="Use 2nd generation TDI channels")
+parser.add_argument('--channels', type=str, default="AET", help="TDI channels to use")
+parser.add_argument('--foreground', action='store_true', default=False, help="Include the WD confusion foreground")
+parser.add_argument('--esaorbits', action='store_true', default=False, help="Use ESA trailing orbits. Default is equal arm length orbits.")
+parser.add_argument('--model', type=str, default="scirdv1", help="Noise model")
 parser.add_argument("-dev", "--dev", help="GPU device", required=False, type=int, default=None)
 parser.add_argument("-Tobs", "--Tobs", help="Observation Time in years", required=False, default=1.0, type=float)
 parser.add_argument("-Ms", "--Ms", help="masses", required=False, nargs='*', default=1e6, type=float)
@@ -21,16 +26,12 @@ parser.add_argument("-outname", "--outname", help="output name", required=False,
 parser.add_argument("-t", "--traj", help="trajectory", required=False, nargs='*', type=str, default="kerr")
 parser.add_argument("-wf", "--wf", help="waveform", required=False, nargs='*', type=str, default="kerr")
 parser.add_argument("-grids", "--grids", help="parameters to iterate over", required=False, nargs=2, default=['e0', 'M'], type=str)
+parser.add_argument("-avg_n", "--avg_n", help="number of samples to average over", required=False, type=int, default=100)
 
 
 args = vars(parser.parse_args())
 
 dev = args['dev']
-
-# if dev is not None:
-#     os.system("CUDA_VISIBLE_DEVICES="+str(args['dev']))
-#     os.environ["CUDA_VISIBLE_DEVICES"] = str(args['dev'])
-#     os.system("echo $CUDA_VISIBLE_DEVICES")
 
 import sys, os
 
@@ -43,10 +44,9 @@ from eryn.prior import ProbDistContainer, uniform_dist
 #sys.path.append('/data/asantini/emris/DirtyEMRI/DataAnalysis/LISAanalysistools/')
 
 from lisatools.diagnostic import *
-from lisatools.sensitivity import get_sensitivity, A2TDISens, E2TDISens, T2TDISens
 from lisatools.detector import EqualArmlengthOrbits, ESAOrbits
-from lisatools.datacontainer import DataResidualArray
-from lisatools.analysiscontainer import AnalysisContainer
+
+import lisatools
 
 from few.trajectory.ode.flux import SchwarzEccFlux, KerrEccEqFlux
 from few.trajectory.ode.pn5 import PN5
@@ -57,11 +57,14 @@ from few.utils.constants import *
 from few.utils.utility import get_p_at_t, get_separatrix
 from few.utils.globals import get_first_backend
 
-from fastlisaresponse import ResponseWrapper
+from fastlisaresponse_102v2 import ResponseWrapper
 
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 from astropy.cosmology import Planck18, z_at_value
+
+from psd_utils import load_psd, get_psd_kwargs, compute_snr2
+import logging
 
 import h5py
 
@@ -102,6 +105,7 @@ try:
             gpu_available = False
         else:
             dev = free_gpus[0]
+            gpu_available = True
     else:
         os.system("CUDA_VISIBLE_DEVICES="+str(dev))
         os.environ["CUDA_VISIBLE_DEVICES"] = str(dev)
@@ -128,7 +132,7 @@ xp.random.seed(SEED)
 cosmo = Planck18 #FlatLambdaCDM(H0=70, Om0=0.3, Tcmb0=2.725)
 
 def get_redshift(distance):
-    return float(z_at_value(cosmo.luminosity_distance, distance * u.Gpc ))
+    return (z_at_value(cosmo.luminosity_distance, distance * u.Gpc )).value
 
 def get_distance(redshift):
     return cosmo.luminosity_distance(redshift).to(u.Gpc).value
@@ -154,31 +158,43 @@ class wave_gen_windowed:
 
 
 def generate_data(
-        Tobs,
-        dt,
+        args,
         fixed_params,
         grids,
         outname,
         traj,
         wave_gen,
+        psd_fn,
+        avg_n=1,
         snr_thr=20.0,
-        emri_kwargs={},):
+        emri_kwargs={},
+        plot_waveform=False,
+        ):
     """
     Generate data for horizon plot
     """
+
+    FMIN, FMAX = 2e-5, 1.0
+
+    Tobs, dt = args['Tobs'], args['dt']
     N_obs = int(Tobs * YRSID_SI / dt) # may need to put "- 1" here because of real transform
     Tobs = (N_obs * dt) / YRSID_SI
 
-    tdi_gen = "2nd generation" #"1st generation" or "2nd generation"
+    tdi_gen = "2nd generation" if args['tdi2'] else "1st generation"# or "2nd generation"
 
     order = 25  # interpolation order (should not change the result too much)
-    orbits = EqualArmlengthOrbits(use_gpu=use_gpu) # ESAOrbits(use_gpu=use_gpu)
+    orbits = ESAOrbits(use_gpu=use_gpu) if args['esaorbits'] else EqualArmlengthOrbits(use_gpu=use_gpu)
+    
+    orbit_file = orbits.filename
+    orbit_file_kwargs = dict(orbit_file=orbit_file)
+
 
     tdi_kwargs_esa = dict(
-        orbits=orbits,
+        #orbits=orbits,
+        orbit_kwargs=orbit_file_kwargs,
         order=order,
         tdi=tdi_gen,
-        tdi_chan="AET",
+        tdi_chan=args['channels'],
     )  # could do "AET
 
     index_lambda = 8
@@ -220,33 +236,55 @@ def generate_data(
 
     def get_p0(M, mu, a, e0, x0, Tobs):
         # fix p0 given T
+        left_bound = None#get_separatrix(a,e0,x0)+0.1
+        right_bound = 200.0
         try:
-            p0 = get_p_at_t(traj,Tobs * 0.999,[M, mu, a, e0, x0],bounds=[get_separatrix(a,e0,x0)+0.1, 150.0])
+            #try:
+            p0 = get_p_at_t(traj, Tobs * 0.999, [M, mu, a, e0, x0], bounds=[left_bound, right_bound])
+            # except:
+            #     left_bound = max(left_bound, 3.41)
+            #     p0 = get_p_at_t(traj, Tobs * 0.999, [M, mu, a, e0, x0], bounds=[left_bound, right_bound])
         except Exception as e:
-            print(e)
-            breakpoint()   
-        #print("new p0 fixed by Tobs, p0=", p0, traj(M, mu, a, p0, e0, x0, T=10.0)[0][-1]/YRSID_SI)
+            logger.info(e)
+            p0 = None   
+        #logger.info("new p0 fixed by Tobs, p0=", p0, traj(M, mu, a, p0, e0, x0, T=10.0)[0][-1]/YRSID_SI)
         return p0
+ 
+    #! remove direct lisatools dependency
+
+    # def get_snr(inp, emri_kwargs={}):
+    #     data_channels = resp_gen(*inp, kwargs=emri_kwargs)
+    #     return snr([data_channels[0], data_channels[1], data_channels[2]], **inner_kw)
     
-    # inner_kw = dict(dt=dt,
-    #                 psd="A1TDISens",
-    #                 psd_args=(),
-    #                 psd_kwargs={'stochastic_params':(Tobs,)},
-    #                 ) 
+    def zero_pad(data):
+        """
+        Inputs: data stream of length N
+        Returns: zero_padded data stream of new length 2^{J} for J \in \mathbb{N}
+        """
+        N = len(data)
+        pow_2 = xp.ceil(np.log2(N))
+        return xp.pad(data,(0,int((2**pow_2)-N)),'constant')
     
-    inner_kw = dict(dt=dt,psd="AET2SensitivityMatrix",psd_args=(),psd_kwargs={"stochastic_params": (Tobs,)})#,use_gpu=use_gpu) 
-    inner_kw = dict(dt=dt,psd=[A2TDISens, E2TDISens, T2TDISens], psd_args=(),psd_kwargs={"stochastic_params": (Tobs,)})
-    
-    def get_snr(inp, emri_kwargs={}):
+    def get_snr(inp, psd_fn, emri_kwargs={}):
         data_channels = resp_gen(*inp, kwargs=emri_kwargs)
-
     
-        return snr([data_channels[0], data_channels[1], data_channels[2]], **inner_kw)
+        data_channels_padded= [zero_pad(item) for item in data_channels]
+        data_channels_fft = xp.array([xp.fft.rfft(item) * dt for item in data_channels_padded])
+        freqs = xp.fft.rfftfreq(len(data_channels_padded[0]),dt)
 
-        
+        mask = (freqs > FMIN) & (freqs < FMAX)
+        data_channels_fft = data_channels_fft[:, mask]
+        freqs = freqs[mask]
+
+        snr2 = compute_snr2(freqs, data_channels_fft, psd_fn, xp=xp)
+
+        return xp.sqrt(snr2)
+  
     
-    def get_snr_avg(M, mu, spin, e0, x0, Tobs, avg_n=1, emri_kwargs={}):
+    def get_snr_avg(M, mu, spin, e0, x0, Tobs, psd_fn, avg_n=1, emri_kwargs={}):
         p0 = get_p0(M, mu, spin, e0, x0, Tobs)
+        if p0 is None:
+            return np.nan, np.nan #return nan if p0 is not found
         prior_draw = priors['emri'].rvs(avg_n) #random draw from prior for the extrinsic parameters
 
         prior_draw[:, 0] = np.arccos(prior_draw[:, 0])  # qS
@@ -262,30 +300,53 @@ def generate_data(
         injection[:, 6] = 1.0 #distance
         
         injection = np.concatenate((injection, prior_draw), axis=1)
+        
+        if plot_waveform:
+            data_channels = resp_gen(*injection[0], kwargs=emri_kwargs)
+            nchannels = len(data_channels)
 
-        data_channels = resp_gen(*injection[0], kwargs=emri_kwargs)
+            ffth = [xp.fft.rfft(data_channels[i])*dt for i in range(nchannels)]
+            fft_freq = xp.fft.rfftfreq(len(data_channels[0]),dt)
 
-        ffth = xp.fft.rfft(data_channels[0])*dt
-        fft_freq = xp.fft.rfftfreq(len(data_channels[0]),dt)
+            mask = (fft_freq > FMIN) & (fft_freq < FMAX)
+            ffth = [ffth[i][mask] for i in range(nchannels)]
+            fft_freq = fft_freq[mask]
 
-        PSD_arr = get_sensitivity(fft_freq, sens_fn='A2TDISens', **inner_kw['psd_kwargs'])
-        plt.figure()
+            PSD_arr = xp.atleast_2d(psd_fn(fft_freq))
+            
+            fig, axs = plt.subplots(1, nchannels, figsize=(15, 5), sharex=True)
+            fig.suptitle(f"PSD and FFT for M={M:.1e}, mu={mu:.1e}, a={spin:.1e}, e0={e0:.1e}, x0={x0:.1e}")
+            fig.subplots_adjust(hspace=0.4, wspace=0.4)
+            fig.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
+            fig.tight_layout()
+            for i in range(nchannels):
+                try:
+                    axs[i].plot(fft_freq.get(), (xp.abs(ffth[i])**2).get())
+                    axs[i].loglog(fft_freq.get(), PSD_arr[i].get())
+                except:
+                    axs[i].plot(fft_freq, (xp.abs(ffth[i])**2))
+                    axs[i].loglog(fft_freq, PSD_arr[i])
+                axs[i].set_xlabel("Frequency [Hz]")
+            axs[0].set_ylabel("Power [Hz$^{-1}$]")
+
+            savepath = savename[:-3] + '_tmp_plots/' + f"M_{M:.1e}_mu_{mu:.1e}_a_{spin:.1e}_e0_{e0:.1e}_x0_{x0:.1e}.pdf"
+
+            plt.savefig(savepath)
+            plt.close(fig)
+        
+        snr_all = xp.array([get_snr(inp, psd_fn, emri_kwargs) for inp in injection])
+        snr_here = xp.mean(snr_all)
         try:
-            plt.plot(fft_freq.get(), (xp.abs(ffth)**2).get())
-            plt.loglog(fft_freq.get(), PSD_arr.get())
+            snr_here = snr_here.get()
+            snr_all = snr_all.get()
         except:
-            plt.plot(fft_freq, (xp.abs(ffth)**2))
-            plt.loglog(fft_freq, PSD_arr)
-        plt.xlabel("Frequency [Hz]")
-        plt.ylabel("Power [Hz$^{-1}$]")
-
-        savepath = savename[:-3] + '_tmp_plots/' + f"M_{M:.1e}_mu_{mu:.1e}_a_{spin:.1e}_e0_{e0:.1e}_x0_{x0:.1e}.pdf"
-
-        plt.savefig(savepath)
-
-        snr_here = np.mean(np.array([get_snr(inp, emri_kwargs) for inp in injection]))
-        assert np.isfinite(snr_here)
-        return snr_here
+            pass
+        try:
+            assert np.isfinite(snr_here)
+        except AssertionError:
+            breakpoint()
+        logger.info(f"Average snr: {snr_here}")
+        return snr_here, snr_all
 
     with h5py.File(outname, 'w') as f:
         f.attrs['Tobs'] = Tobs
@@ -305,8 +366,10 @@ def generate_data(
         mumin, mumax = 1, 1e7
         
         for line_element in tqdm(vals_lines):
-            print(key_lines, line_element)
+            msg = f"Calculating for {key_lines} = {line_element}"
+            logger.info(msg)
             z = np.zeros((len(vals_x),))
+            std = np.zeros((len(vals_x),))
             for i, x_element in enumerate(vals_x):
                 params_all[key_lines] = line_element
                 params_all[key_x] = x_element
@@ -318,19 +381,46 @@ def generate_data(
                 #x0 = params_all['x0']
                 x0 = np.sign(spin) * 1.0 if spin != 0.0 else 1.0
                 spin = np.abs(spin)
-                print("M, q, spin, e0, x0", M, q, spin, e0, x0)
+                logger.info(f"M, q, spin, e0, x0, {M}, {q}, {spin}, {e0}, {x0}")
                 mu = q * M
                 if mu < mumin or mu > mumax:
                     z[i] = np.nan
                     continue
-                snr_here = get_snr_avg(M, mu, spin, e0, x0, Tobs, avg_n=300, emri_kwargs=emri_kwargs)
+                snr_here, snr_all = get_snr_avg(M, mu, spin, e0, x0, Tobs, psd_fn=psd_fn, avg_n=avg_n, emri_kwargs=emri_kwargs)
             
                 d_L = snr_here / snr_thr
+                d_all = snr_all / snr_thr # use it to compute an uncertainty
+
                 z[i] = get_redshift(d_L)
+                z_all = get_redshift(d_all)
+                std[i] = np.std(z_all)
+
+                logger.debug(f"is F(mean snr) close to mean(F(snr))? {np.isclose(z[i], np.mean(z_all))}")
+
+                logger.info(f"Horizon redshift: {z[i]} +/- {std[i]}")
+                if not np.isclose(z[i], np.mean(z_all)):
+                    logger.debug(f"Mean redshift: {np.mean(z_all)}")
 
             f.create_dataset(key_lines + f'_{line_element}', data=z)
+            f.create_dataset(key_lines + f'_{line_element}_sigma', data=std)
 
 if __name__ == '__main__':
+
+    logger = logging.getLogger(name='horizon')
+    level = logging.INFO
+    logger.setLevel(level)
+    if (len(logger.handlers) < 2):
+        formatter = logging.Formatter("%(asctime)s - %(name)s - "
+                                      "%(levelname)s - %(message)s")
+        
+        shandler = logging.StreamHandler(sys.stdout)
+        shandler.setLevel(level)
+        shandler.setFormatter(formatter)
+        logger.addHandler(shandler)
+
+    start_time = time.time()
+    PLOT_WAVEFORM = True
+
     Tobs = args['Tobs']
     Ms = args['Ms']
     qs = args['qs']
@@ -346,8 +436,9 @@ if __name__ == '__main__':
     inspiral_func_all = dict(zip(['kerr', 'schwarzschild', 'pn5'], [KerrEccEqFlux, SchwarzEccFlux, PN5]))
     args_all = dict(zip(['kerr', 'schwarzschild', 'aak'], [[FastKerrEccentricEquatorialFlux,], [FastSchwarzschildEccentricFlux,], [AAKWaveformBase, EMRIInspiral, AAKSummation]]))
 
+    eps = 1e-4 # mode content percentage
 
-    print("generating different " + grid_keys[0] + " lines for " + grid_keys[1] + " grid")
+    logger.info("generating different " + grid_keys[0] + " lines for " + grid_keys[1] + " grid")
 
     params_all = ['M', 'q', 'spin', 'e0']
     fixed_params_keys = [key for key in params_all if key not in grid_keys]
@@ -358,12 +449,12 @@ if __name__ == '__main__':
         fixed_params_all[key] = el
 
     #e0_grid = np.arange(0.15, 0.76, 0.15)
-    e0_grid = [0.1, 0.4, 0.6, 0.75]
-    spin_grid = [-0.99, -0.5, 0.0, 0.5, 0.99]
+    e0_grid = [0.01, 0.3, 0.6, 0.75]
+    spin_grid = [-0.999, -0.99, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 0.99, 0.999]
     #np.concatenate((np.arange(0.0, 0.99, 0.1), np.array([0.99])))
     q_grid = [1e-5, 1e-4, 1e-3]
 
-    Mmin, Mmax = 9e5, 5e7
+    Mmin, Mmax = 5e4, 8e8
     nmasses = 20
     M_grid =10**np.linspace(np.log10(Mmin), np.log10(Mmax), num=nmasses)
 
@@ -380,9 +471,23 @@ if __name__ == '__main__':
     fixed_params_all.pop(grid_keys[0])
     fixed_params_all.pop(grid_keys[1])
 
+    ## psd setup
+    custom_psd_kwargs = {
+        'tdi2': args['tdi2'],
+        'channels': args['channels'],
+    }
+
+    if args['foreground']:
+        custom_psd_kwargs['stochastic_params'] = (Tobs * YRSID_SI,)
+        custom_psd_kwargs['include_foreground'] = True  
+
+    psd_kwargs = get_psd_kwargs(custom_psd_kwargs)
+
+    noise_psd = load_psd(logger=logger, filename=None, xp=xp, **psd_kwargs)
+
 
     for traj_here, amp_here in zip(traj_module, wf_module):
-        
+        start_section_time = time.time()
         assert traj_here in ['kerr', 'schwarzschild', 'pn5'], traj_here
         assert amp_here in ['kerr', 'schwarzschild', 'aak'], amp_here
         
@@ -393,7 +498,7 @@ if __name__ == '__main__':
 
         inspiral_func = inspiral_func_all[traj_here]
         traj = EMRIInspiral(func=inspiral_func)
-        args = args_all[amp_here]
+        args_here = args_all[amp_here]
 
 
         best_backend = get_first_backend(FastKerrEccentricEquatorialFlux.supported_backends())
@@ -412,7 +517,7 @@ if __name__ == '__main__':
             }
         
         wave_gen = GenerateEMRIWaveform(
-            *args,
+            *args_here,
             inspiral_kwargs=inspiral_kwargs,
             sum_kwargs=sum_kwargs,
             return_list=False,
@@ -423,6 +528,9 @@ if __name__ == '__main__':
             "T": Tobs,
             "dt": dt,
         }
+
+        if amp_here != 'aak':
+            waveform_kwargs['eps'] = eps
 
         #wave_gen = wave_gen_windowed(wave_gen, window_fn=('tukey', 0.005))
         savename = './horizon_data/' + outname + 'T_%.1f' % Tobs
@@ -440,29 +548,31 @@ if __name__ == '__main__':
                 savename = savename + '.h5'
 
                 if not os.path.exists(savename):
-                    print("Generating data") 
+                    logger.info(f"Generating data for {traj_here} trajectory and {amp_here} waveform") 
                     try:
                         generate_data(
-                            Tobs,
-                            dt,
+                            args,
                             fixed_params,
                             grids,
                             savename,
                             traj,
                             wave_gen,
+                            noise_psd,
+                            avg_n=args['avg_n'],
                             snr_thr=snr_thr,
                             emri_kwargs=waveform_kwargs,
+                            plot_waveform=PLOT_WAVEFORM
                         )
 
                         fixed_params = {} #reset dictionary
                     except ValueError as e:
-                        print(e)
-                        print("Error in generating data")
-                        print(fixed_params)
+                        logger.info(e)
+                        logger.info("Error in generating data")
+                        logger.info(fixed_params)
                         if os.path.exists(savename):
-                            print("Removing file")
+                            logger.info("Removing file")
                             os.remove(savename)
                 else:
-                    print("Data already exists, skipping")
-
-        print("done")
+                    logger.info("Data already exists, skipping")
+            
+        logger.info("done")
