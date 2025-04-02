@@ -25,43 +25,43 @@ def plot_heatmaps(array,a,x):
 
     
     # Create a figure with four subplots
-    fig, axes = plt.subplots(2, 2, figsize=(10,10))
+    fig, axes = plt.subplots(2, 1, figsize=(6,10))
 
     # Plot the pdot rel diff using scatter plot
-    scatter1 = axes[0,0].scatter(deltap, e, c=z1, cmap='plasma',rasterized=True)
-    axes[0,0].set_title(r'$ \log_{10} \left(| 1 - f_p^{FEW}/ f_p^{BHPC} | \right)$', fontsize=title_fontsize)
-    axes[0,0].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
-    axes[0,0].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
+    scatter1 = axes[0].scatter(deltap, e, c=z1, cmap='plasma',rasterized=True, vmax=-4)
+    axes[0].set_title(r'$ \log_{10} \left(| 1 - f_p^{FEW}/ f_p^{BHPC} | \right)$', fontsize=title_fontsize)
+    axes[0].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
+    axes[0].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
-    axes[0,0].tick_params(axis='both', which='major', labelsize=tick_fontsize)
-    fig.colorbar(scatter1, ax=axes[0,0])
+    axes[0].tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    fig.colorbar(scatter1, ax=axes[0])
 
     # Plot the edot rel diff using scatter plot
-    scatter2 = axes[0,1].scatter(deltap, e, c=z2, cmap='plasma',rasterized=True)
-    axes[0,1].set_title(r'$ \log_{10} \left(| 1 - f_e^{FEW}/ f_e^{BHPC} | \right)$', fontsize=title_fontsize)
-    axes[0,1].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
-    axes[0,1].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
+    scatter2 = axes[1].scatter(deltap, e, c=z2, cmap='plasma',rasterized=True, vmax=-4)
+    axes[1].set_title(r'$ \log_{10} \left(| 1 - f_e^{FEW}/ f_e^{BHPC} | \right)$', fontsize=title_fontsize)
+    axes[1].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
+    axes[1].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
-    axes[0,1].tick_params(axis='both', which='major', labelsize=tick_fontsize)
-    fig.colorbar(scatter2, ax=axes[0,1])
+    axes[1].tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    fig.colorbar(scatter2, ax=axes[1])
 
-    # Plot the corresponding lmax
-    scatterl = axes[1,0].scatter(deltap, e, c=lmax, cmap='plasma',rasterized=True)
-    axes[1,0].set_title(r'$  \ell_{max}$', fontsize=title_fontsize)
-    axes[1,0].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
-    axes[1,0].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
+    # # Plot the corresponding lmax
+    # scatterl = axes[1,0].scatter(deltap, e, c=lmax, cmap='plasma',rasterized=True)
+    # axes[1,0].set_title(r'$  \ell_{max}$', fontsize=title_fontsize)
+    # axes[1,0].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
+    # axes[1,0].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
-    axes[1,0].tick_params(axis='both', which='major', labelsize=tick_fontsize)
-    fig.colorbar(scatterl, ax=axes[1,0])
+    # axes[1,0].tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    # fig.colorbar(scatterl, ax=axes[1,0])
 
-    # Plot the corresponding Delta E inf, assuming horizon flux subdominant.
-    scatterE = axes[1,1].scatter(deltap, e, c=deltaEinf, cmap='plasma',rasterized=True)
-    axes[1,1].set_title(r'$ \log_{10} \left(\Delta E_{\infty}\right)$', fontsize=title_fontsize)
-    axes[1,1].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
-    axes[1,1].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
+    # # Plot the corresponding Delta E inf, assuming horizon flux subdominant.
+    # scatterE = axes[1,1].scatter(deltap, e, c=deltaEinf, cmap='plasma',rasterized=True)
+    # axes[1,1].set_title(r'$ \log_{10} \left(\Delta E_{\infty}\right)$', fontsize=title_fontsize)
+    # axes[1,1].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
+    # axes[1,1].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
-    axes[1,1].tick_params(axis='both', which='major', labelsize=tick_fontsize)
-    fig.colorbar(scatterE, ax=axes[1,1])
+    # axes[1,1].tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    # fig.colorbar(scatterE, ax=axes[1,1])
 
     # Display the plots
     plt.tight_layout()
@@ -76,5 +76,5 @@ def plot_heatmaps(array,a,x):
     plt.savefig(figurename)
     plt.show()  
 
-compare_a0p9pro=np.loadtxt('compare_a0p9pro.txt')
-plot_heatmaps(compare_a0p9pro,0.9,1)
+compare_a0p7pro=np.loadtxt('compare_a0p7pro.txt')
+plot_heatmaps(compare_a0p7pro,0.7,1)

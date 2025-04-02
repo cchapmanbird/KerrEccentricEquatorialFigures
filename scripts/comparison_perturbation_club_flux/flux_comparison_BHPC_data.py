@@ -1,7 +1,6 @@
 import numpy as np
 from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import KerrEccEqFlux
-from few.utils.mappings import kerrecceq_forward_map
 from few.utils.utility import get_separatrix
 
 fewFlux = KerrEccEqFlux()
@@ -39,9 +38,21 @@ def pdotedotcompare(a, x, data):
         
         pLSO=get_separatrix(a,e,x)
 
-        u, w, _, z, in_region_A = kerrecceq_forward_map(a*x, p, e, 1.0, pLSO, kind="flux")
- 
-        if w < 0 or w > 1 + 1e-8:
+        # Attempt to call the flux function and check for exception indicating outside of interpolant range
+        def is_not_allowed_value(p,e,x):
+            try:
+                pdot, edot, xIdot, Omega_phi, Omega_theta, Omega_r = fewFlux([p, e, x])
+        
+                # If no ValueError, set the variable to False
+                error_occurred = False
+            except Exception:
+        
+                # If a ValueError occurs, set the variable to True
+                error_occurred = True
+
+            return error_occurred
+
+        if abs(DeltaEinf)>10**(-7) or abs(DeltaEh)>10**(-7) or is_not_allowed_value(p,e,x): #Throw away ryuichi's data with larger mode sum error or data outside interpolant
             
             pepdotedotvals[i][0]=p #Store p value for reference and move on
             pepdotedotvals[i][1]=e #Store e value for reference and move on
@@ -69,7 +80,6 @@ def pdotedotcompare(a, x, data):
             pepdotedotvals[i][10] = np.log10(abs(DeltaEh)) #Store BHPC's DeltaEh for later reference on log scale
 
             pepdotedotvals[i][11] = p-pLSO #Store as distance from separatrix for later.
-
 
     #Now filter out the entries outside of the domain of the interpolant by deleting rows where the last seven entries are zero
     filtered_array = pepdotedotvals[~np.all(pepdotedotvals[:, -8:] == 0, axis=1)]
