@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 def plot_heatmaps(array,a,x):
 
@@ -28,40 +29,22 @@ def plot_heatmaps(array,a,x):
     fig, axes = plt.subplots(2, 1, figsize=(6,10))
 
     # Plot the pdot rel diff using scatter plot
-    scatter1 = axes[0].scatter(deltap, e, c=z1, cmap='plasma',rasterized=True, vmax=-4)
+    scatter1 = axes[0].scatter(deltap, e, c=z1, cmap='plasma',rasterized=True)
     axes[0].set_title(r'$ \log_{10} \left(| 1 - f_p^{FEW}/ f_p^{BHPC} | \right)$', fontsize=title_fontsize)
-    axes[0].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
+    axes[0].set_xlabel(r'Semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
     axes[0].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
     axes[0].tick_params(axis='both', which='major', labelsize=tick_fontsize)
     fig.colorbar(scatter1, ax=axes[0])
 
     # Plot the edot rel diff using scatter plot
-    scatter2 = axes[1].scatter(deltap, e, c=z2, cmap='plasma',rasterized=True, vmax=-4)
+    scatter2 = axes[1].scatter(deltap, e, c=z2, cmap='plasma',rasterized=True)
     axes[1].set_title(r'$ \log_{10} \left(| 1 - f_e^{FEW}/ f_e^{BHPC} | \right)$', fontsize=title_fontsize)
-    axes[1].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
+    axes[1].set_xlabel(r'Semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
     axes[1].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
     axes[1].tick_params(axis='both', which='major', labelsize=tick_fontsize)
     fig.colorbar(scatter2, ax=axes[1])
-
-    # # Plot the corresponding lmax
-    # scatterl = axes[1,0].scatter(deltap, e, c=lmax, cmap='plasma',rasterized=True)
-    # axes[1,0].set_title(r'$  \ell_{max}$', fontsize=title_fontsize)
-    # axes[1,0].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
-    # axes[1,0].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
-    
-    # axes[1,0].tick_params(axis='both', which='major', labelsize=tick_fontsize)
-    # fig.colorbar(scatterl, ax=axes[1,0])
-
-    # # Plot the corresponding Delta E inf, assuming horizon flux subdominant.
-    # scatterE = axes[1,1].scatter(deltap, e, c=deltaEinf, cmap='plasma',rasterized=True)
-    # axes[1,1].set_title(r'$ \log_{10} \left(\Delta E_{\infty}\right)$', fontsize=title_fontsize)
-    # axes[1,1].set_xlabel(r'Adjusted semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
-    # axes[1,1].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
-    
-    # axes[1,1].tick_params(axis='both', which='major', labelsize=tick_fontsize)
-    # fig.colorbar(scatterE, ax=axes[1,1])
 
     # Display the plots
     plt.tight_layout()
@@ -74,7 +57,28 @@ def plot_heatmaps(array,a,x):
         Print("Input should be x=1 for prograde or x=-1 for retrograde")
 
     plt.savefig(figurename)
-    plt.show()  
+    #plt.show()  
 
+compare_a0p9pro=np.loadtxt('compare_a0p9pro.txt')
 compare_a0p7pro=np.loadtxt('compare_a0p7pro.txt')
+compare_a0p5pro=np.loadtxt('compare_a0p5pro.txt')
+compare_a0p3pro=np.loadtxt('compare_a0p3pro.txt')
+compare_a0p1pro=np.loadtxt('compare_a0p1pro.txt')
+
+compare_a0p9ret=np.loadtxt('compare_a0p9ret.txt')
+compare_a0p7ret=np.loadtxt('compare_a0p7ret.txt')
+compare_a0p5ret=np.loadtxt('compare_a0p5ret.txt')
+compare_a0p3ret=np.loadtxt('compare_a0p3ret.txt')
+compare_a0p1ret=np.loadtxt('compare_a0p1ret.txt')
+
+plot_heatmaps(compare_a0p9pro,0.9,1)
 plot_heatmaps(compare_a0p7pro,0.7,1)
+plot_heatmaps(compare_a0p5pro,0.5,1)
+plot_heatmaps(compare_a0p3pro,0.3,1)
+plot_heatmaps(compare_a0p1pro,0.1,1)
+
+plot_heatmaps(compare_a0p9ret,0.9,-1)
+plot_heatmaps(compare_a0p7ret,0.7,-1)
+plot_heatmaps(compare_a0p5ret,0.5,-1)
+plot_heatmaps(compare_a0p3ret,0.3,-1)
+plot_heatmaps(compare_a0p1ret,0.1,-1)
