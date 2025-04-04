@@ -34,6 +34,7 @@ parser.add_argument("-spin", "--spin", type=float, default=9.9e-5, help="spin")
 parser.add_argument("-zaxis", "--zaxis", type=str, default='e0', help="z-axis")
 parser.add_argument("-base", "--base_name", type=str, default='horizon', help="base name of the data file")
 parser.add_argument("-interp", "--interp", action='store_true', default=False, help="use interpolation")
+parser.add_argument("-fill", "--fill", action='store_true', default=False, help="use fill")
 parser.add_argument("-cpal", "--cpal", type=str, default='colorblind', help="color palette")
 parser.add_argument("-ec", "--every_color", type=int, default=1, help="how many colors to skip")
 parser.add_argument("--hide_aak", action='store_true', default=False, help="hide AAK data")
@@ -167,10 +168,14 @@ def add_plot(M_detector, data, data_sigma, ls, colors='k', fill=False, interp=Fa
         M_source = to_M_source(M_detector_here, z_here)
         if interp:
             if use_gpr:
-                kernel = 1.0 * RBF(length_scale=1e-4, length_scale_bounds=(1e-10, 1e10)) + WhiteKernel(noise_level=1e-3, noise_level_bounds=(1e-30, 1e10))
-                gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=20, alpha=sigma_here**2 * 1e-4,)
 
-                gp.fit(np.log10(M_source)[:, None], z_here)                
+                interp_mask = M_source < 3e7
+
+                kernel = 1.0 * RBF(length_scale=1e-4, length_scale_bounds=(1e-10, 1e10)) + WhiteKernel(noise_level=1e-3, noise_level_bounds=(1e-30, 1e10))
+                gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=200, alpha=sigma_here[interp_mask]**2 * 1e-4,)
+                gp.fit(np.log10(M_source[interp_mask])[:, None], z_here[interp_mask])
+
+                #gp.fit(np.log10(M_source)[:, None], z_here)                
                 x = logMgrid
 
                 # gp.fit(M_source[:, None], z_here)
@@ -264,7 +269,7 @@ if __name__ == '__main__':
 
     interp = args['interp']
     interp_kwargs = dict(fill_value='extrapolate')
-    fill = False
+    fill = args['fill']
     zmax = 0.0
 
     what_to_plot = [kerr_kerr_data]
@@ -352,7 +357,7 @@ if __name__ == '__main__':
     #ax.legend(handles=handles, ncols=3, bbox_to_anchor=(1.038, 1.1))
     #fig.tight_layout() 
     ax.xaxis.set_tick_params(pad=6)
-    ax.set_xlim(9e4, 5e7)
+    ax.set_xlim(9e4, 2e7)
     ax.set_ylim(0., zmax)
     plt.savefig(savename, dpi=300)
     #breakpoint()

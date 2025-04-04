@@ -175,6 +175,7 @@ def generate_data(
     """
 
     FMIN, FMAX = 2e-5, 1.0
+    DT_LOWMASS = 2.0
 
     Tobs, dt = args['Tobs'], args['dt']
     N_obs = int(Tobs * YRSID_SI / dt) # may need to put "- 1" here because of real transform
@@ -203,7 +204,7 @@ def generate_data(
     # with longer signals we care less about this
     t0 = 10000.0  # throw away on both ends when our orbital information is weird
 
-    resp_gen = ResponseWrapper(
+    resp_gen_custom = ResponseWrapper(
         wave_gen,
         Tobs,
         dt,
@@ -218,7 +219,24 @@ def generate_data(
         **tdi_kwargs_esa,
     )
 
-    resp_gen = wave_gen_windowed(resp_gen, window_fn=('tukey', 0.005))
+    resp_gen_lowmass = ResponseWrapper(
+        wave_gen,
+        Tobs,
+        DT_LOWMASS,
+        index_lambda,
+        index_beta,
+        t0=t0,
+        flip_hx=True,  # set to True if waveform is h+ - ihx (FEW is)
+        use_gpu=use_gpu,
+        is_ecliptic_latitude=False,  # False if using polar angle (theta)
+        remove_garbage=True,#"zero",  # removes the beginning of the signal that has bad information
+        #n_overide=int(1e5),  # override the number of points (should be larger than the number of points in the signal)
+        **tdi_kwargs_esa,
+    )
+
+    resp_gen_custom = wave_gen_windowed(resp_gen_custom, window_fn=('tukey', 0.005))
+    resp_gen_lowmass = wave_gen_windowed(resp_gen_lowmass, window_fn=('tukey', 0.005))
+
 
     priors = {
         "emri": ProbDistContainer(
@@ -269,8 +287,8 @@ def generate_data(
         data_channels = resp_gen(*inp, kwargs=emri_kwargs)
     
         data_channels_padded= [zero_pad(item) for item in data_channels]
-        data_channels_fft = xp.array([xp.fft.rfft(item) * dt for item in data_channels_padded])
-        freqs = xp.fft.rfftfreq(len(data_channels_padded[0]),dt)
+        data_channels_fft = xp.array([xp.fft.rfft(item) * emri_kwargs['dt'] for item in data_channels_padded])
+        freqs = xp.fft.rfftfreq(len(data_channels_padded[0]),emri_kwargs['dt'])
 
         mask = (freqs > FMIN) & (freqs < FMAX)
         data_channels_fft = data_channels_fft[:, mask]
@@ -386,7 +404,16 @@ def generate_data(
                 if mu < mumin or mu > mumax:
                     z[i] = np.nan
                     continue
-                snr_here, snr_all = get_snr_avg(M, mu, spin, e0, x0, Tobs, psd_fn=psd_fn, avg_n=avg_n, emri_kwargs=emri_kwargs)
+                
+                # deal with timestep
+                emri_kwargs_here = emri_kwargs.copy()
+                if M < 1e6:
+                    emri_kwargs_here['dt'] = DT_LOWMASS
+                    resp_gen = resp_gen_lowmass
+                else:
+                    resp_gen = resp_gen_custom
+
+                snr_here, snr_all = get_snr_avg(M, mu, spin, e0, x0, Tobs, psd_fn=psd_fn, avg_n=avg_n, emri_kwargs=emri_kwargs_here)
             
                 d_L = snr_here / snr_thr
                 d_all = snr_all / snr_thr # use it to compute an uncertainty
@@ -452,7 +479,7 @@ if __name__ == '__main__':
     e0_grid = [0.01, 0.3, 0.6, 0.75]
     spin_grid = [-0.999, -0.99, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 0.99, 0.999]
     #np.concatenate((np.arange(0.0, 0.99, 0.1), np.array([0.99])))
-    q_grid = [1e-5, 1e-4, 1e-3]
+    q_grid = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2]
 
     Mmin, Mmax = 5e4, 8e8
     nmasses = 20
