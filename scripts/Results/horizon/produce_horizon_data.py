@@ -145,7 +145,7 @@ class wave_gen_windowed:
         self.wave_gen = wave_gen
         self.window_fn = window_fn
 
-    def __call__(self, *args, kwargs={}):
+    def __call__(self, *args, **kwargs):
         wave = self.wave_gen(*args, **kwargs)
         if isinstance(wave, list):
             window = xp.asarray(get_window(self.window_fn, len(wave[0])))
@@ -204,8 +204,10 @@ def generate_data(
     # with longer signals we care less about this
     t0 = 10000.0  # throw away on both ends when our orbital information is weird
 
+    window_args = ('tukey', 0.005)  # window function to apply to the waveform
+
     resp_gen_custom = ResponseWrapper(
-        wave_gen,
+        wave_gen_windowed(wave_gen, window_fn=window_args),
         Tobs,
         dt,
         index_lambda,
@@ -220,7 +222,7 @@ def generate_data(
     )
 
     resp_gen_lowmass = ResponseWrapper(
-        wave_gen,
+        wave_gen_windowed(wave_gen, window_fn=window_args),
         Tobs,
         DT_LOWMASS,
         index_lambda,
@@ -234,8 +236,8 @@ def generate_data(
         **tdi_kwargs_esa,
     )
 
-    resp_gen_custom = wave_gen_windowed(resp_gen_custom, window_fn=('tukey', 0.005))
-    resp_gen_lowmass = wave_gen_windowed(resp_gen_lowmass, window_fn=('tukey', 0.005))
+    # resp_gen_custom = wave_gen_windowed(resp_gen_custom, window_fn=window_args)
+    # resp_gen_lowmass = wave_gen_windowed(resp_gen_lowmass, window_fn=window_args)
 
 
     priors = {
