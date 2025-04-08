@@ -31,13 +31,11 @@ downsampled_4 = EMRIInspiral(func=KerrEccEqFlux,downsample=[(skip_points, skip_p
 skip_points = 8
 downsampled_8 = EMRIInspiral(func=KerrEccEqFlux,downsample=[(skip_points, skip_points, skip_points), (skip_points, skip_points, skip_points)])
 
-kip_points = 2
+skip_points = 2
 downsampled_u = EMRIInspiral(func=KerrEccEqFlux, downsample=[(skip_points, 1, 1), (skip_points, 1, 1)])
 
-skip_points = 2
 downsampled_w = EMRIInspiral(func=KerrEccEqFlux,downsample=[(1, skip_points, 1), (1, skip_points, 1)])
 
-skip_points = 2
 downsampled_z = EMRIInspiral(func=KerrEccEqFlux,downsample=[(1, 1, skip_points), (1, 1, skip_points)])
 
 # Jonathan's randomised parameters code

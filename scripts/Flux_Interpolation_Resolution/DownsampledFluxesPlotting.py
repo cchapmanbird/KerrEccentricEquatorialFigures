@@ -18,7 +18,7 @@ dephasings = np.loadtxt('DownsampledFluxesData.txt')
 
 # Plot Historgrams of Dephasings when downsampling by 2, 4, and 8
 bins1 = np.arange(-5,3.5,0.25)
-
+plt.figure()
 plt.hist(dephasings[:,0], bins=bins1, histtype='stepfilled', facecolor='none', edgecolor=colorblind_hex[0], linewidth=2, label="1/2 grid points")
 plt.hist(dephasings[:,1], bins=bins1, histtype='stepfilled',facecolor='none', edgecolor=colorblind_hex[1], linewidth=2, label="1/4 grid points")
 plt.hist(dephasings[:,2], bins=bins1, histtype='stepfilled',facecolor='none', edgecolor=colorblind_hex[2], linewidth=2, label="1/8 grid points")
@@ -41,7 +41,7 @@ plt.savefig("DownsampledFluxesHistogram1.pdf")
 
 # Plot Historgrams of Dephasings when downsampling in u, w, and z
 bins2 = np.arange(-6,1,0.25)
-
+plt.figure()
 plt.hist(dephasings[:,3], bins=bins2, histtype='stepfilled', facecolor='none', edgecolor=colorblind_hex[0], linewidth=2, label="downsample in $u$")
 plt.hist(dephasings[:,4], bins=bins2, histtype='stepfilled',facecolor='none', edgecolor=colorblind_hex[1], linewidth=2, label="downsample in $w$")
 plt.hist(dephasings[:,5], bins=bins2, histtype='stepfilled',facecolor='none', edgecolor=colorblind_hex[2], linewidth=2, label="downsample in $z$")
@@ -111,7 +111,7 @@ ax2.legend()
 
 
 plt.tight_layout()
-plt.savefig('DownsampledFluxesHistogram2.pdf')
+plt.savefig('DownsampledFluxesHistogramCombined.pdf')
 
 
 
