@@ -1,3 +1,7 @@
+"""
+This script runs a timing test for the FastEMRIWaveforms package.
+python run_timing.py  -f test_timing --duration 0.1 --iterations 10 -l test_timing_log
+"""
 import numpy as np
 import sys
 import os
@@ -25,7 +29,7 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--delta-t",
+        "--delta_t",
         help="Turn on iteration over sample rate",
         action="store_true",
         default=False,
@@ -221,7 +225,7 @@ if __name__ == "__main__":
 
     waveform_kwargs_base = {
         "T": duration,
-        "dt": 10.0,
+        "dt": 5.0,
         "eps": 1e-2,
     }
 
