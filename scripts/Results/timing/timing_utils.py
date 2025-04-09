@@ -173,8 +173,8 @@ def time_full_waveform_generation(
     """
     results = []
 
-    dt_list = [5.0, 10.0, 15.0]
-    eps_list = [1e-2, 1e-3, 1e-4]
+    dt_list = [5.0, 10.0]
+    eps_list = [1e-2, 1e-5]
 
     # run things once to cache, this will sometimes take a few seconds
     fd_waveform_func(*input_params[0], **waveform_kwargs_base)
@@ -241,13 +241,13 @@ def time_full_waveform_generation(
                     fft_td = fft_td[mask]
                     power_fd = (fd_wave.conj() * fd_wave).sum().real 
                     power_td = (fft_td.conj() * fft_td).sum().real
-                    print("Relative difference in power", abs(power_fd - power_td) / power_fd)
+                    # print("Relative difference in power", abs(power_fd - power_td) / power_fd)
                     overlap += (fd_wave.conj() * fft_td).sum().real / ( (fd_wave.conj() * fd_wave).sum().real * (fft_td.conj() * fft_td).sum().real )**0.5
                 # average
                 overlap /= 2.0
                 # float
                 overlap = float(overlap)
-                print("Overlap", overlap)
+                # print("Overlap", overlap)
 
                 internal_results_dict = {
                     "dt": wvf_kwargs["dt"],

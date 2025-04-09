@@ -1,16 +1,17 @@
 #!/bin/bash
+# run this script with: nohup bash submit_run_timing.sh > out.out &
 export CUDA_VISIBLE_DEVICES=1
 # Array of durations
-durations=(0.1)
+durations=(2.0 4.0)
 
 # Iterate over each duration
 for duration in "${durations[@]}"; do
     # Construct output filenames
-    output_file="test_timing_${duration}yr"
-    log_file="test_timing_log_${duration}yr"
+    output_file="timing_${duration}yr"
+    log_file="timing_log_${duration}yr"
 
     # Run the Python script with the specified duration and additional flags
-    python run_timing.py -v -f "$output_file" --generate_parameters --nsamples 10 --epsilon --duration "$duration" --iterations 1 -l "$log_file"
+    python run_timing.py -v -f "$output_file" --generate_parameters --nsamples 10000 --epsilon --duration "$duration" --iterations 1 -l "$log_file"
 
     echo "Completed run for duration ${duration} year(s). Results saved to ${output_file}.json and ${log_file}.log"
 done
