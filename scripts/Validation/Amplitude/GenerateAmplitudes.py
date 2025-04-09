@@ -49,6 +49,6 @@ with h5py.File('amplitude_diff.h5', 'w') as f:
     for key, val in amps_here.items():
         ell, m, n = key
         diff_amp = val - ampS_here[key]
-        f.create_dataset(f'amp_Kerr_{ell}{m}{n}', data=val.get())
-        f.create_dataset(f'amp_Schw_{ell}{m}{n}', data=ampS_here[key].get())
-        f.create_dataset(f'amp_diff_{ell}{m}{n}', data=diff_amp.get())
+        f.create_dataset(f'amp_Kerr_{ell}{m}{n}', data=val)
+        f.create_dataset(f'amp_Schw_{ell}{m}{n}', data=ampS_here[key])
+        f.create_dataset(f'amp_diff_{ell}{m}{n}', data=diff_amp)
