@@ -1,6 +1,6 @@
 """
 This script runs a timing test for the FastEMRIWaveforms package.
-python run_timing.py  -f test_timing --duration 0.1 --iterations 10 -l test_timing_log
+python run_timing.py -v -f test_timing --duration 0.1 --iterations 10 -l test_timing_log
 """
 import numpy as np
 import sys
