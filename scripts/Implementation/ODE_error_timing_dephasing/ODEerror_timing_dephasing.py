@@ -108,7 +108,7 @@ if __name__ == "__main__":
     
     traj = EMRIInspiral(func=KerrEccEqFlux)
     
-    Ntest = 100
+    Ntest = 10
     pvec, evec, avec, Mvec = initialize_parameters(traj, Ntest, mass_ratio, Tobs=4.0, seed=42)
     print("Initial parameters generated")
     total_array = []
