@@ -532,7 +532,7 @@ class TimingBase(
                 phase_t_in = None
             # Log the time taken
             amplitude_time = time.time() - start_time
-            print(f"Amplitude generation took {trajectory_time} seconds.")
+            print(f"Amplitude generation took {amplitude_time} seconds.")
             start_time = time.time()
             # create waveform
             waveform_temp = self.create_waveform(
