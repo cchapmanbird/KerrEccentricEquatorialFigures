@@ -178,7 +178,8 @@ def time_full_waveform_generation(
 
     # run things once to cache, this will sometimes take a few seconds
     fd_waveform_func(*input_params[0], **waveform_kwargs_base)
-
+    td_waveform_func(*input_params[0], **waveform_kwargs_base)
+    
     if verbose:
         iterator = tqdm(input_params, total=len(input_params))
     else:
@@ -200,6 +201,7 @@ def time_full_waveform_generation(
             for eps in eps_list_to_use:
                 wvf_kwargs = waveform_kwargs_base.copy()
                 wvf_kwargs.update({"dt": dt, "eps": eps})
+
                 # Time FD waveform generation
                 fd_start_time = timeit.default_timer()
                 for _ in range(iterations):
