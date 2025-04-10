@@ -26,7 +26,7 @@ def plot_diffs(array,n):
 
     # Plot the pdot rel diff using scatter plot
     scatter1 = axes[0].scatter(e,a, c=z1, cmap='plasma',rasterized=True)
-    axes[0].set_title(rf'$\log_{{10}} \left(| 1 - Re[A_{{22{n}}}]^{{FEW}}/ Re[A_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
+    axes[0].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Re}}[\mathcal{{A}}_{{22{n}}}]^{{FEW}}/ \mathrm{{Re}}[\mathcal{{A}}_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
     axes[0].set_xlabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     axes[0].set_ylabel(r'Kerr spin $(a)$', fontsize=label_fontsize)
     
@@ -35,7 +35,7 @@ def plot_diffs(array,n):
 
     # Plot the edot rel diff using scatter plot
     scatter2 = axes[1].scatter(e, a, c=z2, cmap='plasma',rasterized=True)
-    axes[1].set_title(rf'$\log_{{10}} \left(| 1 - Im[A_{{22{n}}}]^{{FEW}}/ Im[A_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
+    axes[1].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Im}}[\mathcal{{A}}_{{22{n}}}]^{{FEW}}/ \mathrm{{Im}}[\mathcal{{A}}_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
     axes[1].set_xlabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     axes[1].set_ylabel(r'Kerr spin $(a)$', fontsize=label_fontsize)
     
@@ -75,7 +75,7 @@ def plot_diffs2(array,n):
 
     # Plot the pdot rel diff using scatter plot
     scatter1 = axes[0].scatter(p, e, c=z1, cmap='plasma',rasterized=True)
-    axes[0].set_title(rf'$\log_{{10}} \left(| 1 - Re[A_{{22{n}}}]^{{FEW}}/ Re[A_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
+    axes[0].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Re}}[\mathcal{{A}}_{{22{n}}}]^{{FEW}}/ \mathrm{{Re}}[\mathcal{{A}}_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
     axes[0].set_xlabel(r'Semilatus rectum $(p)$', fontsize=label_fontsize)
     axes[0].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
@@ -84,7 +84,7 @@ def plot_diffs2(array,n):
 
     # Plot the edot rel diff using scatter plot
     scatter2 = axes[1].scatter(p, e, c=z2, cmap='plasma',rasterized=True)
-    axes[1].set_title(rf'$\log_{{10}} \left(| 1 - Im[A_{{22{n}}}]^{{FEW}}/ Im[A_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
+    axes[1].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Im}}[\mathcal{{A}}_{{22{n}}}]^{{FEW}}/ \mathrm{{Im}}[\mathcal{{A}}_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
     axes[1].set_xlabel(r'Semilatus rectum $(p)$', fontsize=label_fontsize)
     axes[1].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
@@ -125,7 +125,7 @@ def plot_diffs3(array,n):
 
     # Plot the pdot rel diff using scatter plot
     scatter1 = axes[0].scatter(dp, e, c=z1, cmap='plasma',rasterized=True)
-    axes[0].set_title(rf'$\log_{{10}} \left(| 1 - Re[A_{{22{n}}}]^{{FEW}}/ Re[A_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
+    axes[0].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Re}}[\mathcal{{A}}_{{22{n}}}]^{{FEW}}/ \mathrm{{Re}}[\mathcal{{A}}_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
     axes[0].set_xlabel(r'Semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
     axes[0].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
@@ -134,7 +134,7 @@ def plot_diffs3(array,n):
 
     # Plot the edot rel diff using scatter plot
     scatter2 = axes[1].scatter(dp, e, c=z2, cmap='plasma',rasterized=True)
-    axes[1].set_title(rf'$\log_{{10}} \left(| 1 - Im[A_{{22{n}}}]^{{FEW}}/ Im[A_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
+    axes[1].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Im}}[\mathcal{{A}}_{{22{n}}}]^{{FEW}}/ \mathrm{{Im}}[\mathcal{{A}}_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
     axes[1].set_xlabel(r'Semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
     axes[1].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
