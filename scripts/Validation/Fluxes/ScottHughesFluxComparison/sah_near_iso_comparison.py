@@ -40,13 +40,13 @@ for i, k in enumerate([0, 2, 4, 5]):
 
     toplot =np.log10(np.abs(1 - pdot_int / pdot_grid))[k,:,:].flatten()
 
-    plt.scatter(1 - a_plot[i,:,:].flatten(), p_plot[i,:,:].flatten(), s=3, c=toplot, vmin=-6, vmax=-2, cmap='plasma', rasterized=True)
+    plt.scatter(1 - a_plot[i,:,:].flatten(), p_plot[i,:,:].flatten(), s=3, c=toplot, vmin=-8, vmax=-2, cmap='plasma', rasterized=True)
 
     plt.text(0.62, 0.9, rf'$e_\mathrm{{max}}$={e_plot[k, p_plot[k] <= 5].max():.2f}', fontsize=10, transform=plt.gca().transAxes,
             bbox=dict(facecolor='white', edgecolor='none', boxstyle='round'))
 
     if i == 0 or i == 2:
-        plt.ylabel(r'$p - p_{\mathrm{lso}}$')
+        plt.ylabel(r'$p - p_{\mathrm{sep}}$')
     else:
         plt.tick_params(axis='y', labelleft=False)
     
@@ -61,9 +61,9 @@ for i, k in enumerate([0, 2, 4, 5]):
     plt.ylim(1e-3, 5)
 
 # one colorbar for all subplots, given its own axes
-cbar_ax = fig.add_axes([0.93, 0.15, 0.02, 0.75])
-cbar = fig.colorbar(plt.cm.ScalarMappable(cmap='plasma', norm=plt.Normalize(-6, -2)), cax=cbar_ax)
-cbar.set_label(r'$\log_{10} \left| \frac{|\dot{p}_{\mathrm{int}} - \dot{p}_{\mathrm{grid}}|}{|\dot{p}_{\mathrm{grid}}|} \right|$')
+cbar_ax = fig.add_axes([0.93, 0.15, 0.02, 0.7])
+cbar = fig.colorbar(plt.cm.ScalarMappable(cmap='plasma', norm=plt.Normalize(-8, -2)), cax=cbar_ax)
+cbar.set_label(r'$\log_{10} \left| 1 - f_p^{\mathrm{FEW}} / f_p^{\mathrm{SAH}} \right|$')
 plt.subplots_adjust(wspace=0.1, hspace=0.1)
 # plt.show()
 plt.savefig('SAH_nearISO_Comparison.pdf', bbox_inches='tight')
