@@ -1,0 +1,50 @@
+========================================================
+ Instructions for data files of numerical fluxes
+ Created on Aug. 31 2020
+========================================================
+
+This directory contains numerical data for the adiabatic change 
+of the constants of motion and the orbital parameters due to 
+gravitational waves (GWs) radiated from a compact star of mass $\mu$ 
+in eccentric and equatorial orbits around a Kerr black hole (BH) 
+of mass $M$. The numerical data are computed in Ref.[1], based 
+on the numerical code developed in Ref.[2].
+
+========
+Notation
+========
+We use the following notation in this file.
+For details please see Ref.[1].
+
+q : dimensionless spin parameter of the Kerr BH
+p : semi-latus rectum
+e : orbital eccentricity
+\theta_{inc} : orbital inclination angle
+
+E : specific energy of the compact star
+L_z : z-component of specific angular momentum of the compact star
+C : Carter constant of the compact star
+
+dI/dt^{\infty}: the adiabatic change for I due to the emission of GWs to infinity
+dI/dt^{H}: the adiabatic change for I due to the emission of GWs to the horizon
+
+================
+ dIdt_qXXXX.dat 
+================
+dIdt_qXXXX.dat contain 
+[q,p,e,\theta_{inc},E,Lz,C,dE^{\infty}/dt dL_z^{\infty}/dt,dC^{\infty}/dt,dE^{H}/dt,dL_z^{H}/dt,dC^{H}/dt,dp^{\infty}/dt,de^{\infty}/dt,d\theta_{inc}^{\infty}/dt,dp^{H}/dt,de^{H}/dt,d\theta_{inc}^{H}/dt,lmax,\Delta E^{\infty},\Delta_E^{H}]
+in each line with:
+
+\Delta E^{\infty,H}: (dE^{\infty,H}/dt)_{$\ell=lmax$}/(dE^{\infty,H}/dt)
+lmax: The maximum value of $\ell$ in $\ell$-summation. In general, we have lmax=25 
+      or lmax<25 with \Delta E^{\infty,H}<10^{-6}. In some cases, however, we have lmax<25
+      with \Delta E^{\infty,H}>10^{-6} because of failure in computing "renormalized angular 
+      momentum" nu or in convergence of numerical integrations to compute Z^{\infty,H}_{lmn}
+      at the $\ell=lmax+1$ mode. 
+ 
+==========
+References
+==========
+[1] R. Fujita and M. Shibata, Extreme mass ratio inspirals on the equatorial plane in the adiabatic order, PRD accepted, arXiv:200x.xxxxx [gr-qc].
+
+[2] R. Fujita, W. Hikida, and H. Tagoshi, An Efficient Numerical Method for Computing Gravitational Waves Induced by a Particle Moving on Eccentric Inclined Orbits around a Kerr Black Hole, Prog. Theor. Phys. 121, 843-874 (2009), arXiv:0904.3810 [gr-qc].
