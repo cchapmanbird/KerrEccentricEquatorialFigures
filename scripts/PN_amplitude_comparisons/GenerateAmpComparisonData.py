@@ -50,7 +50,7 @@ def spheroidal_in_spherical(j, m, gamma, num):
     
     return sign * eigenvect[int(j - lmin)]
 
-# Takes a list of spheroidal modes (j,m) at a point in parameter space from j=2 to some jmax. Computes the (l,m) spherical mode by summing the mode mixing formula up to jmax.
+# Takes a list of spheroidal modes (j,m) at a point in parameter space from j=max(2, abs(m)) to some jmax. Computes the (l,m) spherical mode by summing the mode mixing formula up to jmax.
 def sphericalmodefromspheroidal(l, m, gamma, spheroidalmodes):
     
     if isinstance(spheroidalmodes,np.ndarray) and spheroidalmodes.ndim==1:
@@ -62,19 +62,15 @@ def sphericalmodefromspheroidal(l, m, gamma, spheroidalmodes):
     ljmin = max(2, abs(m))
     jmax = n + 1
 
-    #postion of jmin in spheroidal modes list
-    sumfrom = ljmin -2
-
     #Vary number of terms by accuracy requirements? For now compute minumum number of terms +9:
     num_min = l-(ljmin-1)
     num=num_min + 9
 
-    
     sphericalmode = 0
 
     #Ensuring we compute enough coefficients to include the relevant l mode based of automatic number of terms included.
     for i in range(n):
-        sphericalmode += (spheroidal_in_spherical(ljmin+i, m, gamma, num)[l-ljmin])*spheroidalmodes[sumfrom+i]
+        sphericalmode += (spheroidal_in_spherical(ljmin+i, m, gamma, num)[l-ljmin])*spheroidalmodes[i]
 
     return sphericalmode
 
@@ -215,6 +211,14 @@ PNp2l4m2n1 = np.loadtxt('5PN_e10_mathematica/p2l4m2n1.csv', delimiter=',')
 PNp2l5m2n1 = np.loadtxt('5PN_e10_mathematica/p2l5m2n1.csv', delimiter=',')
 PNp2l6m2n1 = np.loadtxt('5PN_e10_mathematica/p2l6m2n1.csv', delimiter=',')
 
+#Array for given spheroidal l mode (4,5,6,7,8,9) ,m=4,n=2 containting entries of [p,e,Re[Amp],Im[Amp]] for a=0.998. prograde.
+PNp2l4m4n2 = np.loadtxt('5PN_e10_mathematica/p2l4m4n2.csv', delimiter=',')
+PNp2l5m4n2 = np.loadtxt('5PN_e10_mathematica/p2l5m4n2.csv', delimiter=',')
+PNp2l6m4n2 = np.loadtxt('5PN_e10_mathematica/p2l6m4n2.csv', delimiter=',')
+PNp2l7m4n2 = np.loadtxt('5PN_e10_mathematica/p2l7m4n2.csv', delimiter=',')
+PNp2l8m4n2 = np.loadtxt('5PN_e10_mathematica/p2l8m4n2.csv', delimiter=',')
+PNp2l9m4n2 = np.loadtxt('5PN_e10_mathematica/p2l9m4n2.csv', delimiter=',')
+
 #l=2,m=2,n=0 spherical mode:
 PNp2l2m2n0spherical=np.zeros(np.shape(PNp2l2m2n0));
 
@@ -268,7 +272,33 @@ for i in range(0,np.shape(PNp2l2m2n1)[0]):
     PNp2l2m2n1spherical[i][2]=outputmodeRe
     PNp2l2m2n1spherical[i][3]=outputmodeIm 
 
-def compareamps2(dataPN,n):
+#l=6,m=4,n=2 spherical mode:
+PNp2l6m4n2spherical=np.zeros(np.shape(PNp2l6m4n2));
+
+for i in range(0,np.shape(PNp2l6m4n2)[0]):
+    inputmodesRe=np.array([PNp2l4m4n2[i][2],PNp2l5m4n2[i][2],PNp2l6m4n2[i][2],PNp2l7m4n2[i][2],PNp2l8m4n2[i][2],PNp2l9m4n2[i][2]])
+    inputmodesIm=np.array([PNp2l4m4n2[i][3],PNp2l5m4n2[i][3],PNp2l6m4n2[i][3],PNp2l7m4n2[i][3],PNp2l8m4n2[i][3],PNp2l9m4n2[i][3]])
+
+    a=float(0.998)
+    p=PNp2l6m4n2[i][0]
+    e=PNp2l6m4n2[i][1]
+    x=1
+    
+    #spheroidicity gamma=a omega
+    phifreq, thetafreq, radfreq=get_fundamental_frequencies(a, p, e, x)
+    omega=4*phifreq +2*radfreq
+    gamma=a*omega
+    
+    outputmodeRe=sphericalmodefromspheroidal(6, 4, gamma, inputmodesRe)
+    outputmodeIm=sphericalmodefromspheroidal(6, 4, gamma, inputmodesIm)
+
+    PNp2l6m4n2spherical[i][0]=p
+    PNp2l6m4n2spherical[i][1]=e
+
+    PNp2l6m4n2spherical[i][2]=outputmodeRe
+    PNp2l6m4n2spherical[i][3]=outputmodeIm 
+
+def compareamps2(dataPN,l,m,n):
     
     length=dataPN.shape[0]
 
@@ -279,7 +309,7 @@ def compareamps2(dataPN,n):
         e=dataPN[i][1]
         a=float(0.998)
 
-        ampval = amp_module(a, p, e, 1, specific_modes=[(2, 2, n)])[(2,2,n)][0]
+        ampval = amp_module(a, p, e, 1, specific_modes=[(l, m, n)])[(l,m,n)][0]
         
         reampPN=-dataPN[i][2] #Extra minus sign it seems from convention
         imampPN=-dataPN[i][3] #Extra minus sign it seems from convention
@@ -302,11 +332,13 @@ def compareamps2(dataPN,n):
 
     return reldiffs
 
-p2l2m2n0diffs=compareamps2(PNp2l2m2n0spherical,0)
-p2l2m2n1diffs=compareamps2(PNp2l2m2n1spherical,1)
+p2l2m2n0diffs=compareamps2(PNp2l2m2n0spherical,2,2,0)
+p2l2m2n1diffs=compareamps2(PNp2l2m2n1spherical,2,2,1)
+p2l6m4n2diffs=compareamps2(PNp2l6m4n2spherical,6,4,2)
 
 np.savetxt("p2l2m2n0diffs.txt", p2l2m2n0diffs)
 np.savetxt("p2l2m2n1diffs.txt", p2l2m2n1diffs)
+np.savetxt("p2l6m4n2diffs.txt", p2l6m4n2diffs)
 
 #ENDS: Data for plot style 2
 

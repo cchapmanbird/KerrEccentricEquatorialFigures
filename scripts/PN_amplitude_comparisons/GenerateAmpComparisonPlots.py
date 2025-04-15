@@ -52,7 +52,7 @@ def plot_diffs(array,n):
 
 #Plot style 2
 
-def plot_diffs2(array,n):
+def plot_diffs2(array,l,m,n):
 
     plt.rcParams["text.usetex"] = True
     plt.rcParams["font.family"] = "serif"
@@ -75,7 +75,7 @@ def plot_diffs2(array,n):
 
     # Plot the pdot rel diff using scatter plot
     scatter1 = axes[0].scatter(p, e, c=z1, cmap='plasma',rasterized=True)
-    axes[0].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Re}}[\mathcal{{A}}_{{22{n}}}]^{{FEW}}/ \mathrm{{Re}}[\mathcal{{A}}_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
+    axes[0].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Re}}[\mathcal{{A}}_{{{l}{m}{n}}}]^{{FEW}}/ \mathrm{{Re}}[\mathcal{{A}}_{{{l}{m}{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
     axes[0].set_xlabel(r'Semilatus rectum $(p)$', fontsize=label_fontsize)
     axes[0].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
@@ -84,7 +84,7 @@ def plot_diffs2(array,n):
 
     # Plot the edot rel diff using scatter plot
     scatter2 = axes[1].scatter(p, e, c=z2, cmap='plasma',rasterized=True)
-    axes[1].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Im}}[\mathcal{{A}}_{{22{n}}}]^{{FEW}}/ \mathrm{{Im}}[\mathcal{{A}}_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
+    axes[1].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Im}}[\mathcal{{A}}_{{{l}{m}{n}}}]^{{FEW}}/ \mathrm{{Im}}[\mathcal{{A}}_{{{l}{m}{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
     axes[1].set_xlabel(r'Semilatus rectum $(p)$', fontsize=label_fontsize)
     axes[1].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
     
@@ -95,7 +95,7 @@ def plot_diffs2(array,n):
     plt.tight_layout()
 
 
-    figurename=f'A22{n}Comparison5PN.pdf'
+    figurename=f'A{l}{m}{n}Comparison5PN.pdf'
 
     plt.savefig(figurename)
     #plt.show()  
@@ -156,8 +156,10 @@ plot_diffs(p1l2m2n1diffs,1)
 
 p2l2m2n0diffs=np.loadtxt('p2l2m2n0diffs.txt')
 p2l2m2n1diffs=np.loadtxt('p2l2m2n1diffs.txt')
-plot_diffs2(p2l2m2n0diffs,0)
-plot_diffs2(p2l2m2n1diffs,1)
+p2l6m4n2diffs=np.loadtxt('p2l6m4n2diffs.txt')
+plot_diffs2(p2l2m2n0diffs,2,2,0)
+plot_diffs2(p2l2m2n1diffs,2,2,1)
+plot_diffs2(p2l6m4n2diffs,6,4,2)
 
 p3l2m2n0diffs=np.loadtxt('p3l2m2n0diffs.txt')
 p3l2m2n1diffs=np.loadtxt('p3l2m2n1diffs.txt')
