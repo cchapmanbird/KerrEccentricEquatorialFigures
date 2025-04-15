@@ -7,10 +7,6 @@ def plot_heatmaps(array,a,x):
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Computer Modern"]
 
-    label_fontsize = 14
-    tick_fontsize = 14
-    title_fontsize = 16
-
     # Extract the p, e, z1=pdot rel diff, and z2=edot rel diff values from the array
     p = array[:, 0]
     e = array[:, 1]
@@ -23,40 +19,24 @@ def plot_heatmaps(array,a,x):
 
     #Change x-axis from p to p-psep
     deltap=deltaEh=array[:,-1]
-
     
     # Create a figure with four subplots
-    fig, axes = plt.subplots(2, 1, figsize=(6,10))
-
+    fig = plt.figure(figsize=(4.5,3), dpi=200)
     # Plot the pdot rel diff using scatter plot
-    scatter1 = axes[0].scatter(deltap, e, c=z1, cmap='plasma',rasterized=True)
-    axes[0].set_title(r'$ \log_{10} \left(| 1 - f_p^{FEW}/ f_p^{BHPC} | \right)$', fontsize=title_fontsize)
-    axes[0].set_xlabel(r'Semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
-    axes[0].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
+    scatter1 = plt.scatter(deltap, e, s=5, c=z1, cmap='plasma',rasterized=True, vmin=-10, vmax=-2)
+    plt.xlabel(r'$p-p_\mathrm{sep}$')
+    plt.ylabel(r'$e$')
     
-    axes[0].tick_params(axis='both', which='major', labelsize=tick_fontsize)
-    fig.colorbar(scatter1, ax=axes[0])
-
-    # Plot the edot rel diff using scatter plot
-    scatter2 = axes[1].scatter(deltap, e, c=z2, cmap='plasma',rasterized=True)
-    axes[1].set_title(r'$ \log_{10} \left(| 1 - f_e^{FEW}/ f_e^{BHPC} | \right)$', fontsize=title_fontsize)
-    axes[1].set_xlabel(r'Semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
-    axes[1].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
-    
-    axes[1].tick_params(axis='both', which='major', labelsize=tick_fontsize)
-    fig.colorbar(scatter2, ax=axes[1])
-
-    # Display the plots
-    plt.tight_layout()
+    plt.colorbar(scatter1, label=r'$ \log_{10} \left| 1 - \hat{f}_p^\mathrm{FEW}/ \hat{f}_p^\mathrm{BHPC} \right|$')
 
     if x==-1:
         figurename=f'FluxComparisonBHPC_{a}_retro.pdf'
     elif x==1:
         figurename=f'FluxComparisonBHPC_{a}_pro.pdf'
     else:
-        Print("Input should be x=1 for prograde or x=-1 for retrograde")
+        print("Input should be x=1 for prograde or x=-1 for retrograde")
 
-    plt.savefig(figurename)
+    plt.savefig(figurename, bbox_inches='tight')
     #plt.show()  
 
 compare_a0p9pro=np.loadtxt('compare_a0p9pro.txt')

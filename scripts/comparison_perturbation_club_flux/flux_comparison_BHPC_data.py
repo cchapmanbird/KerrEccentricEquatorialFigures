@@ -1,7 +1,6 @@
 import numpy as np
-from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import KerrEccEqFlux
-from few.utils.utility import get_separatrix
+from few.utils.geodesic import get_separatrix
 
 fewFlux = KerrEccEqFlux()
 
