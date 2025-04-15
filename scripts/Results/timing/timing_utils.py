@@ -2,6 +2,9 @@ import numpy as np
 import timeit
 from tqdm import tqdm
 from numpy.random import seed, uniform
+# from scipy.interpolate import CubicSpline
+# S_git = np.genfromtxt('./LISA_Alloc_Sh.txt')
+# Sh_X = CubicSpline(S_git[:,0], S_git[:,1])
 
 from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode.flux import KerrEccEqFlux
@@ -170,12 +173,13 @@ def time_full_waveform_generation(
     """
     results = []
 
-    dt_list = [5.0, 10.0, 15.0]
-    eps_list = [1e-2, 1e-3, 1e-4]
+    dt_list = [5.0, 10.0]
+    eps_list = [1e-2, 1e-5]
 
     # run things once to cache, this will sometimes take a few seconds
     fd_waveform_func(*input_params[0], **waveform_kwargs_base)
-
+    td_waveform_func(*input_params[0], **waveform_kwargs_base)
+    
     if verbose:
         iterator = tqdm(input_params, total=len(input_params))
     else:
@@ -197,10 +201,11 @@ def time_full_waveform_generation(
             for eps in eps_list_to_use:
                 wvf_kwargs = waveform_kwargs_base.copy()
                 wvf_kwargs.update({"dt": dt, "eps": eps})
+
                 # Time FD waveform generation
                 fd_start_time = timeit.default_timer()
                 for _ in range(iterations):
-                    fd_waveform_func(*params, **wvf_kwargs)
+                    out_fd = fd_waveform_func(*params, **wvf_kwargs)
 
                 fd_end_time = timeit.default_timer()
 
@@ -209,17 +214,49 @@ def time_full_waveform_generation(
                 # Time TD waveform generation
                 td_start_time = timeit.default_timer()
                 for _ in range(iterations):
-                    td_waveform_func(*params, **wvf_kwargs)
+                    out_td = td_waveform_func(*params, **wvf_kwargs)
                     
                 td_end_time = timeit.default_timer()
 
                 td_time = (td_end_time - td_start_time) / iterations
+                
+                # transform td to fd
+                from scipy.signal.windows import hann, tukey
+                from few.utils.fdutils import get_fft_td_windowed, get_fd_windowed
+                import cupy as xp
+                Npoints = len(out_td[0])
+                window = xp.asarray(hann(Npoints))
+                window = xp.asarray(tukey(Npoints, 0.005)) # half percent taper
+                frequency = fd_waveform_func.waveform_generator.create_waveform.frequency
+                # if you want to include the PSD
+                # psd = xp.asarray(Sh_X(frequency.get()))
+                # compare by windowing both the fd and td waveforms
+                fd_windowed = get_fd_windowed(out_fd, window)
+                fft_td_windowed = get_fft_td_windowed(out_td, window, dt)
+                # check length
+                # mask out the zeros
+                mask = (out_fd[0]!=complex(0.0))
+                
+                overlap = 0.0
+                for fd_wave,fft_td in zip(fd_windowed, fft_td_windowed):
+                    fd_wave = fd_wave[mask]
+                    fft_td = fft_td[mask]
+                    power_fd = (fd_wave.conj() * fd_wave).sum().real 
+                    power_td = (fft_td.conj() * fft_td).sum().real
+                    # print("Relative difference in power", abs(power_fd - power_td) / power_fd)
+                    overlap += (fd_wave.conj() * fft_td).sum().real / ( (fd_wave.conj() * fd_wave).sum().real * (fft_td.conj() * fft_td).sum().real )**0.5
+                # average
+                overlap /= 2.0
+                # float
+                overlap = float(overlap)
+                # print("Overlap", overlap)
 
                 internal_results_dict = {
                     "dt": wvf_kwargs["dt"],
                     "eps": wvf_kwargs["eps"],
                     "fd_timing": fd_time,
                     "td_timing": td_time,
+                    "overlap": overlap,
                 }
 
                 internal_param_list.append(internal_results_dict.copy())
