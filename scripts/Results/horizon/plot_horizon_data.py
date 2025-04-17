@@ -1,5 +1,5 @@
 # plot horizon data for the Kerr eccentric equatorial case
-# python plot_horizon_data.py -Tobs 2.0 -q 1.0e-4 -spin 0.99 -zaxis e0 -base AE
+# python plot_horizon_data.py -Tobs 2.0 -q 1.0e-5 -e0 0.5 -spin 0.99 -zaxis q -base t0_1e4 --hide_aak -interp -cpal inferno_r --plot_low_ecc
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,6 +38,7 @@ parser.add_argument("-fill", "--fill", action='store_true', default=False, help=
 parser.add_argument("-cpal", "--cpal", type=str, default='colorblind', help="color palette")
 parser.add_argument("-ec", "--every_color", type=int, default=1, help="how many colors to skip")
 parser.add_argument("--hide_aak", action='store_true', default=False, help="hide AAK data")
+parser.add_argument("--plot_low_ecc", action='store_true', default=False, help="plot low eccentricity data")
 parser.add_argument("-min", "--min", type=float, default=-100.0, help="minimum value for the z-axis")
 parser.add_argument("-max", "--max", type=float, default=100.0, help="maximum value for the z-axis")
 
@@ -144,7 +145,7 @@ def convert_tick_labels(z_axis, z_values):
     else:
         raise ValueError("Invalid z-axis parameter")
 
-def add_plot(M_detector, data, data_sigma, ls, colors='k', fill=False, interp=False, interp_kwargs={}, plot_kwargs={}, fig=None, axs=None, use_gpr=True):
+def add_plot(M_detector, data, data_sigma, ls, colors='k', fill=False, interp=False, interp_kwargs={}, plot_kwargs={}, fig=None, axs=None, use_gpr=True, nsigma=1):
     if fig is None or axs is None:
         fig, axs = plt.subplots(ncols=1, nrows=1, sharex=True)
 
@@ -163,9 +164,19 @@ def add_plot(M_detector, data, data_sigma, ls, colors='k', fill=False, interp=Fa
         sigma_here = sigma_here[~nan_mask]
         M_detector_here = M_detector[~nan_mask]
 
+        MMAX_here = np.max(M_detector_here)
+        # if key == 'q_0.001':
+        #     MMAX_here = 1e7
+        # elif key == 'q_0.01':
+        #     MMAX_here = 3e6
+
         #breakpoint()
 
         M_source = to_M_source(M_detector_here, z_here)
+        mask = M_source < MMAX_here
+        M_source = M_source[mask]
+        z_here = z_here[mask]
+        sigma_here = sigma_here[mask]
         if interp:
             if use_gpr:
 
@@ -200,12 +211,12 @@ def add_plot(M_detector, data, data_sigma, ls, colors='k', fill=False, interp=Fa
         else:
             axs.semilogx(x, y, ls=ls, color=color, label=key, **plot_kwargs)
             if sigma is not None:   
-                axs.fill_between(x, y-sigma, y+sigma, alpha=0.3, zorder=1, hatch='', color=color, rasterized=True)
+                axs.fill_between(x, y-nsigma*sigma, y+nsigma*sigma, alpha=0.3, zorder=1, hatch='', color=color, rasterized=True)
         
         # if interp:
         #     axs.semilogx(M_source, z_here, marker='x', color=color, **plot_kwargs)
 
-    plt.xlabel(r'$M_{\rm source} \, [M_\odot]$')
+    plt.xlabel(r'$m_{1, \, \rm source} \, [M_\odot]$')
     plt.ylabel(r'$\bar{z}$')
 
     return fig, axs
@@ -239,6 +250,8 @@ if __name__ == '__main__':
     zaxis = args['zaxis']
     base_name = args['base_name']
 
+    low_e0 = 0.1
+
     print('z-axis: ', zaxis)
 
     if zaxis == 'e0':
@@ -251,20 +264,24 @@ if __name__ == '__main__':
     
     elif zaxis == 'q':
         datastring = 'T_{:.1f}_spin_{:.1e}_e0_{:.1e}.h5'.format(Tobs, spin, e0)   
-        zaxis_plot = r'$q$' 
+        zaxis_plot = r'$\epsilon$' 
 
     else:
         raise ValueError("z-axis must be either 'e0', 'spin', or 'q'")
     
-    savename = plotdir + base_name + '_' + zaxis + '_' + datastring[:-3] + '.pdf'
+    datastring_low_ecc = datastring.replace('e0_{:.1e}'.format(e0), 'e0_{:.1e}'.format(low_e0))
     
+    savename = plotdir + base_name + '_' + zaxis + '_' + datastring[:-3] + '.pdf'
+
     kerr_kerr_data = base_name + '_traj_kerr_wf_kerr_' + datastring
+    kerr_kerr_low_ecc_data = base_name + '_traj_kerr_wf_kerr_' + datastring_low_ecc
     kerr_aak_data = base_name + '_traj_kerr_wf_aak_' + datastring
     pn5_aak_data = base_name + '_traj_pn5_wf_aak_' + datastring
 
     linestyles = ['-', '--', '-.']
     #labels = ['Kerr 0PA', 'Kerr trajectory, AAK amplitudes', 'PN5 trajectory, AAK amplitudes']
     labels = ['Kerr-Kerr', 'Kerr-AAK', 'PN5-AAK']
+    labels= [r'$e_0={:.1f}$'.format(e0), r'$e_0={:.1f}$'.format(low_e0)]
     handles = []
 
     interp = args['interp']
@@ -273,9 +290,13 @@ if __name__ == '__main__':
     zmax = 0.0
 
     what_to_plot = [kerr_kerr_data]
+    if args['plot_low_ecc']:
+        what_to_plot += [kerr_kerr_low_ecc_data]
+
     if not args['hide_aak']:
         what_to_plot += [kerr_aak_data, pn5_aak_data]
-
+    
+    print('what_to_plot: ', what_to_plot)
     for i, datafile in enumerate(what_to_plot):
         ls = linestyles[i]
         label = labels[i]
@@ -303,7 +324,6 @@ if __name__ == '__main__':
         # keep only the keys that are in the sorted list between args['min'] and args['max']
         sorted_keys = [key for key in sorted_keys if key in data.keys() and args['min'] <= float(key.split('_')[1]) <= args['max']]
 
-
         data = {key:data[key] for key in sorted_keys}
     
         #split the keys into two lists: one without the 'sigma' keys and one with
@@ -319,7 +339,7 @@ if __name__ == '__main__':
         M_detector = attr['M'] # detector-frame mass
         plot_kwargs = dict(zorder=10-i, rasterized=True)
         if i == 0: # create the figure
-            fig, ax = add_plot(M_detector, data_z, data_sigma, ls, colors=cpal, fill=fill, interp=interp, interp_kwargs=interp_kwargs, plot_kwargs=plot_kwargs, use_gpr=True)
+            fig, ax = add_plot(M_detector, data_z, data_sigma, ls, colors=cpal, fill=fill, interp=interp, interp_kwargs=interp_kwargs, plot_kwargs=plot_kwargs, use_gpr=True, nsigma=1)
             z_values = np.array(list(attr[zaxis]))
             zmask = np.logical_and(z_values >= args['min'],z_values <= args['max'])
             z_values = z_values[zmask]
@@ -328,7 +348,7 @@ if __name__ == '__main__':
             nlines = len(z_values)
 
         else:
-            add_plot(M_detector, data_z, data_sigma, ls, colors=cpal, fill=fill, interp=interp, interp_kwargs=interp_kwargs, plot_kwargs=plot_kwargs, fig=fig, axs=ax, use_gpr=True)
+            add_plot(M_detector, data_z, data_sigma, ls, colors=cpal, fill=fill, interp=interp, interp_kwargs=interp_kwargs, plot_kwargs=plot_kwargs, fig=fig, axs=ax, use_gpr=True, nsigma=0)
 
         handle = mlines.Line2D([], [], color='gray', linestyle=ls, label=label)
         handles += [handle]
@@ -353,11 +373,25 @@ if __name__ == '__main__':
     cbar.set_label(zaxis_plot, fontsize=18, labelpad=22)
     cbar.ax.yaxis.label.set_rotation(0)
 
-
-    #ax.legend(handles=handles, ncols=3, bbox_to_anchor=(1.038, 1.1))
+    if args['plot_low_ecc']:
+        ax.legend(handles=handles, 
+                ncols=1,
+                loc='upper right',
+                frameon=False,
+                #bbox_to_anchor=(0.5, 1.12),
+                #columnspacing=4,
+                #handletextpad=1,
+                #mode='expand',
+                #borderaxespad=0.0
+                )
     #fig.tight_layout() 
     ax.xaxis.set_tick_params(pad=6)
-    ax.set_xlim(9e4, 2e7)
+    ax.set_xlim(5e4, 2e7)
+
+    zmax = min(zmax, 19.0)# take care of stuff blowing up
+    if args['plot_low_ecc']:
+        zmax +=2 #make space for the legend
+
     ax.set_ylim(0., zmax)
     plt.savefig(savename, dpi=300)
     #breakpoint()

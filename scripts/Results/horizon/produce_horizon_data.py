@@ -46,20 +46,19 @@ from eryn.prior import ProbDistContainer, uniform_dist
 from lisatools.diagnostic import *
 from lisatools.detector import EqualArmlengthOrbits, ESAOrbits
 
-import lisatools
-
 from few.trajectory.ode.flux import SchwarzEccFlux, KerrEccEqFlux
 from few.trajectory.ode.pn5 import PN5
 from few.waveform.waveform import GenerateEMRIWaveform, AAKWaveformBase, FastKerrEccentricEquatorialFlux, FastSchwarzschildEccentricFlux
 from few.trajectory.inspiral import EMRIInspiral
 from few.summation.aakwave import AAKSummation
 from few.utils.constants import *
-from few.utils.utility import get_p_at_t, get_separatrix
+from few.utils.utility import get_p_at_t
+from few.utils.geodesic import get_fundamental_frequencies
 from few.utils.globals import get_first_backend
 
-from fastlisaresponse_102v2 import ResponseWrapper
+from fastlisaresponse import ResponseWrapper
+#from fastlisaresponse_102v2 import ResponseWrapper
 
-from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 from astropy.cosmology import Planck18, z_at_value
 
@@ -111,10 +110,14 @@ try:
         os.environ["CUDA_VISIBLE_DEVICES"] = str(dev)
         print("Using GPU", dev)
         gpu_available = True
+    
+    gpu_available = True
 
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
     gpu_available = False
+    os.environ["JAX_PLATFORM_NAME"] = "cpu"
+    os.environ["JAX_PLATFORMS"] = "cpu"
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -127,6 +130,13 @@ if use_gpu and not gpu_available:
 
 np.random.seed(SEED)
 xp.random.seed(SEED)
+
+os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+os.environ["JAX_ENABLE_X64"] = "true"
+
+import jax.numpy as jnp
+from jax import jit, vmap
+
 
 
 cosmo = Planck18 #FlatLambdaCDM(H0=70, Om0=0.3, Tcmb0=2.725)
@@ -156,6 +166,75 @@ class wave_gen_windowed:
 
         return wave   
 
+@jit
+def compute_Omega_mn(omegaPhi, omegaR, m, n):
+    """
+    Compute the Omega_mn frequencies.
+    """
+    return m*omegaPhi + n*omegaR
+
+@jit
+def compute_Omega_mn_vectorized(omegaPhi, omegaR, m_array, n_array):
+    """
+    Compute all combinations of Omega_mn frequencies.
+    Returns a matrix of shape (len(m_array), len(n_array))
+    """
+    # Create a function that maps over m for fixed n
+    f1 = vmap(lambda m, n: compute_Omega_mn(omegaPhi, omegaR, m, n), in_axes=(0, None))
+    
+    # Then map that function over all n values
+    return vmap(lambda n: f1(m_array, n))(n_array)
+
+def find_maximum_frequency(
+        waveform_generator,
+        M,
+        mu,
+        spin,
+        p0,
+        e0,
+        x0,
+        Phi_phi0,
+        Phi_theta0,
+        Phi_r0,
+        T,
+        dt,
+        buffer_time_seconds=3600,
+        inspiral_kwargs={},
+):
+    if 'T' not in inspiral_kwargs:
+        inspiral_kwargs['T'] = T
+    if 'dt' not in inspiral_kwargs:
+        inspiral_kwargs['dt'] = dt
+
+    (t, p, e, xI, Phi_phi, Phi_theta, Phi_r) = waveform_generator.inspiral_generator(
+            M,
+            mu,
+            spin,
+            p0,
+            e0,
+            x0,
+            Phi_phi0=Phi_phi0,
+            Phi_theta0=Phi_theta0,
+            Phi_r0=Phi_r0,
+            **inspiral_kwargs,
+        )
+    
+    t_index = np.where(t >= t[-1] - buffer_time_seconds)[0][0] 
+    omegaPhi, omegaTheta, omegaR = get_fundamental_frequencies(spin, p[t_index], e[t_index], xI[t_index])
+
+    dimension_factor = 2.0 * np.pi * M * MTSUN_SI
+    omegaPhi = omegaPhi / dimension_factor
+    omegaTheta = omegaTheta / dimension_factor
+    omegaR = omegaR / dimension_factor
+
+    ns = jnp.asarray(waveform_generator.ns)
+    ms = jnp.asarray(waveform_generator.ms)
+
+    Omega_mn = compute_Omega_mn_vectorized(omegaPhi, omegaR, ms, ns)
+
+    maximum_frequency = jnp.max(Omega_mn)
+
+    return maximum_frequency
 
 def generate_data(
         args,
@@ -174,7 +253,7 @@ def generate_data(
     Generate data for horizon plot
     """
 
-    FMIN, FMAX = 2e-5, 1.0
+    FMIN, FMAX = 2e-9, 1.0
     DT_LOWMASS = 2.0
 
     Tobs, dt = args['Tobs'], args['dt']
@@ -191,8 +270,8 @@ def generate_data(
 
 
     tdi_kwargs_esa = dict(
-        #orbits=orbits,
-        orbit_kwargs=orbit_file_kwargs,
+        orbits=orbits,
+        #orbit_kwargs=orbit_file_kwargs,
         order=order,
         tdi=tdi_gen,
         tdi_chan=args['channels'],
@@ -207,7 +286,7 @@ def generate_data(
     window_args = ('tukey', 0.005)  # window function to apply to the waveform
 
     resp_gen_custom = ResponseWrapper(
-        wave_gen_windowed(wave_gen, window_fn=window_args),
+        wave_gen,
         Tobs,
         dt,
         index_lambda,
@@ -222,7 +301,7 @@ def generate_data(
     )
 
     resp_gen_lowmass = ResponseWrapper(
-        wave_gen_windowed(wave_gen, window_fn=window_args),
+        wave_gen,
         Tobs,
         DT_LOWMASS,
         index_lambda,
@@ -236,8 +315,8 @@ def generate_data(
         **tdi_kwargs_esa,
     )
 
-    # resp_gen_custom = wave_gen_windowed(resp_gen_custom, window_fn=window_args)
-    # resp_gen_lowmass = wave_gen_windowed(resp_gen_lowmass, window_fn=window_args)
+    resp_gen_custom = wave_gen_windowed(resp_gen_custom, window_fn=window_args)
+    resp_gen_lowmass = wave_gen_windowed(resp_gen_lowmass, window_fn=window_args)
 
 
     priors = {
@@ -269,12 +348,6 @@ def generate_data(
             p0 = None   
         #logger.info("new p0 fixed by Tobs, p0=", p0, traj(M, mu, a, p0, e0, x0, T=10.0)[0][-1]/YRSID_SI)
         return p0
- 
-    #! remove direct lisatools dependency
-
-    # def get_snr(inp, emri_kwargs={}):
-    #     data_channels = resp_gen(*inp, kwargs=emri_kwargs)
-    #     return snr([data_channels[0], data_channels[1], data_channels[2]], **inner_kw)
     
     def zero_pad(data):
         """
@@ -285,14 +358,14 @@ def generate_data(
         pow_2 = xp.ceil(np.log2(N))
         return xp.pad(data,(0,int((2**pow_2)-N)),'constant')
     
-    def get_snr(inp, psd_fn, emri_kwargs={}):
+    def get_snr(inp, psd_fn, maximum_frequency=None, emri_kwargs={}):
         data_channels = resp_gen(*inp, kwargs=emri_kwargs)
     
         data_channels_padded= [zero_pad(item) for item in data_channels]
         data_channels_fft = xp.array([xp.fft.rfft(item) * emri_kwargs['dt'] for item in data_channels_padded])
         freqs = xp.fft.rfftfreq(len(data_channels_padded[0]),emri_kwargs['dt'])
-
-        mask = (freqs > FMIN) & (freqs < FMAX)
+        fmax = maximum_frequency if maximum_frequency is not None else FMAX
+        mask = (freqs > FMIN) & (freqs < fmax)
         data_channels_fft = data_channels_fft[:, mask]
         freqs = freqs[mask]
 
@@ -320,13 +393,32 @@ def generate_data(
         injection[:, 6] = 1.0 #distance
         
         injection = np.concatenate((injection, prior_draw), axis=1)
+
+        data_channels = resp_gen(*injection[0], kwargs=emri_kwargs)
+        maximum_frequency = find_maximum_frequency(
+            wave_gen.waveform_generator,
+            M,
+            mu,
+            spin,
+            p0,
+            e0,
+            x0,
+            prior_draw[0, 4],
+            prior_draw[0, 5],
+            prior_draw[0, 6],
+            Tobs,
+            dt,
+            buffer_time_seconds=3600,
+            inspiral_kwargs=emri_kwargs,
+        )
+        logger.info(f"Maximum frequency: {maximum_frequency}")
         
         if plot_waveform:
-            data_channels = resp_gen(*injection[0], kwargs=emri_kwargs)
             nchannels = len(data_channels)
 
             ffth = [xp.fft.rfft(data_channels[i])*dt for i in range(nchannels)]
             fft_freq = xp.fft.rfftfreq(len(data_channels[0]),dt)
+            fft_freq[0] = fft_freq[1] # remove the zero frequency
 
             mask = (fft_freq > FMIN) & (fft_freq < FMAX)
             ffth = [ffth[i][mask] for i in range(nchannels)]
@@ -346,6 +438,9 @@ def generate_data(
                 except:
                     axs[i].plot(fft_freq, (xp.abs(ffth[i])**2))
                     axs[i].loglog(fft_freq, PSD_arr[i])
+                axs[i].axvline(maximum_frequency, color='black', linestyle='--', label='Maximum frequency')
+                axs[i].set_title(f"Channel {i}")
+                axs[i].legend()
                 axs[i].set_xlabel("Frequency [Hz]")
             axs[0].set_ylabel("Power [Hz$^{-1}$]")
 
@@ -354,7 +449,7 @@ def generate_data(
             plt.savefig(savepath)
             plt.close(fig)
         
-        snr_all = xp.array([get_snr(inp, psd_fn, emri_kwargs) for inp in injection])
+        snr_all = xp.array([get_snr(inp, psd_fn, maximum_frequency, emri_kwargs) for inp in injection])
         snr_here = xp.mean(snr_all)
         try:
             snr_here = snr_here.get()
@@ -383,7 +478,7 @@ def generate_data(
         key_lines, vals_lines = keys_grid[0], grids[keys_grid[0]]
         key_x, vals_x = keys_grid[1], grids[keys_grid[1]]
 
-        mumin, mumax = 1, 1e7
+        mumin, mumax = 1e-2, 1e7
         
         for line_element in tqdm(vals_lines):
             msg = f"Calculating for {key_lines} = {line_element}"
@@ -406,6 +501,14 @@ def generate_data(
                 if mu < mumin or mu > mumax:
                     z[i] = np.nan
                     continue
+                            
+                # if q >= 1e-3 and M > 7e7:  
+                #     z[i] = np.nan
+                #     continue
+
+                # elif q >= 1e-2 and M > 3e7:
+                #     z[i] = np.nan
+                #     continue
                 
                 # deal with timestep
                 emri_kwargs_here = emri_kwargs.copy()
@@ -465,7 +568,7 @@ if __name__ == '__main__':
     inspiral_func_all = dict(zip(['kerr', 'schwarzschild', 'pn5'], [KerrEccEqFlux, SchwarzEccFlux, PN5]))
     args_all = dict(zip(['kerr', 'schwarzschild', 'aak'], [[FastKerrEccentricEquatorialFlux,], [FastSchwarzschildEccentricFlux,], [AAKWaveformBase, EMRIInspiral, AAKSummation]]))
 
-    eps = 1e-4 # mode content percentage
+    eps = 1e-5 # mode content percentage
 
     logger.info("generating different " + grid_keys[0] + " lines for " + grid_keys[1] + " grid")
 
@@ -479,12 +582,13 @@ if __name__ == '__main__':
 
     #e0_grid = np.arange(0.15, 0.76, 0.15)
     e0_grid = [0.01, 0.3, 0.6, 0.75]
-    spin_grid = [-0.999, -0.99, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 0.99, 0.999]
-    #np.concatenate((np.arange(0.0, 0.99, 0.1), np.array([0.99])))
+    #spin_grid = [-0.999, -0.99, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 0.99, 0.999]
+    spin_grid = [0.0, 0.25, 0.5, 0.75, 0.99, 0.999]
     q_grid = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2]
 
-    Mmin, Mmax = 5e4, 8e8
+    Mmin, Mmax = 5e4, 5e8
     nmasses = 20
+
     M_grid =10**np.linspace(np.log10(Mmin), np.log10(Mmax), num=nmasses)
 
     grids_all = {
