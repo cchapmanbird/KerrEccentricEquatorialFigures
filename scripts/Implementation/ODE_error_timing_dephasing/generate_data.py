@@ -34,7 +34,7 @@ def compute_results(traj, M, mass_ratio, a, p0, e0, err_vec, insp_kw):
     results = {err: [] for err in err_vec}
     # interpolate with cubic splines the time and phi
     
-    t_true, Phi_phi_true, evalT_true = get_N_Phif_evalT(traj, M, mass_ratio*M, a, p0, e0, 1e-11, insp_kw)
+    t_true, Phi_phi_true, evalT_true = get_N_Phif_evalT(traj, M, mass_ratio*M, a, p0, e0, 1e-13, insp_kw)
     cs_true = CubicSpline(t_true, Phi_phi_true)
     # loop over errors
     for err in err_vec:
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     insp_kw = {
         "T": 10.0,
         "dt": 1.0,
-        "err": 1e-11,
+        "err": 1e-13,
         "DENSE_STEPPING": 0,
         "buffer_length": int(1e4),
         "upsample": False,
