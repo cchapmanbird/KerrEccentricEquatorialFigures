@@ -17,7 +17,7 @@ plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["Computer Modern"]
 
 # %%
-fname = 'timing_4.0yr.json'
+fname = 'timing_2.0yr.json'
 timing_data = json.load(open(fname, 'r'))
 
 # %%
@@ -65,6 +65,11 @@ def corner_plot(dataframe, minmax=None, use_td=True, plot_type='timing', eps_val
         timing_values = (data_given_eps['fd_timing']) / (data_given_eps['td_timing'])
     if plot_type == 'overlap':
         timing_values = np.log10(np.abs(1-data_given_eps['overlap']))
+    # remove outliers outside 99.9 percentile
+    mask = (timing_values > np.percentile(timing_values, 0.1)) & (timing_values < np.percentile(timing_values, 99.9))
+    timing_values = timing_values[mask]
+    # remove outliers outside 99.9 percentile
+    data_given_eps = data_given_eps[mask]
     
     if not minmax:
         vmin = min(timing_values)
@@ -139,7 +144,7 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange',
     ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
     ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
     ax.legend(fontsize=label_fontsize)
-plt.savefig(fname[:-5] + '_timing_dt_5.pdf', dpi=150)
+plt.savefig(fname[:-5] + '_timing_dt_5.png', dpi=300)
 
 # histogram overlap
 _min, _max = np.abs(1-data_df['overlap']).min(), np.abs(1-data_df['overlap']).max()
@@ -161,17 +166,17 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange',
     ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
     ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
     ax.legend(fontsize=label_fontsize)
-plt.savefig(fname[:-5] + '_overlap_dt_5.pdf', dpi=150)
+plt.savefig(fname[:-5] + '_overlap_dt_5.png', dpi=300)
 
 # %%
 corner_plot(data_df, eps_value=1e-2, dt_value=5.0)
-plt.savefig(fname[:-5] + '_corner_td.pdf', dpi=150)
+plt.savefig(fname[:-5] + '_corner_td.png', dpi=300)
 
 corner_plot(data_df, eps_value=1e-2, dt_value=5.0, use_td=False)
-plt.savefig(fname[:-5] + '_corner_fd.pdf', dpi=150)
+plt.savefig(fname[:-5] + '_corner_fd.png', dpi=300)
 
 corner_plot(data_df, eps_value=1e-2, dt_value=5.0, plot_type='ratio')
-plt.savefig(fname[:-5] + '_corner_ratio.pdf', dpi=150)
+plt.savefig(fname[:-5] + '_corner_ratio.png', dpi=300)
 
 corner_plot(data_df, eps_value=1e-2, dt_value=5.0, plot_type='overlap')
-plt.savefig(fname[:-5] + '_corner_overlap.pdf', dpi=150)
+plt.savefig(fname[:-5] + '_corner_overlap.png', dpi=300)
