@@ -1,6 +1,6 @@
 #!/bin/bash
 # run this script with: nohup bash submit_run_timing.sh > out.out &
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=0
 # Array of durations
 durations=(2.0 4.0)
 

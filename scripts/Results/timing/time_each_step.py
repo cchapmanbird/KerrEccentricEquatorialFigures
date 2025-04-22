@@ -745,13 +745,13 @@ phi = np.pi / 4  # azimuthal viewing angle
 dist = 1.0  # distance
 
 
-wave_timing = TimingWaveform()
+wave_timing = TimingWaveform(inspiral_kwargs={"err": 1e-8})
 
-wave_timing(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-2)
+wave_timing(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-5)
 
 print("Now actual timing")
 tic = time.time()
-trajectory_time, amplitude_time, summation_time = wave_timing(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-2)
+trajectory_time, amplitude_time, summation_time = wave_timing(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-5)
 toc = time.time()
 print("total speed",toc - tic, " in agreement with ", trajectory_time + amplitude_time + summation_time)
 print("trajectory speed:", trajectory_time, "percentage:", trajectory_time/ (toc - tic))
