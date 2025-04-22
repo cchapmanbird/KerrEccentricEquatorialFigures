@@ -61,7 +61,7 @@ import os
 
 # file_list = os.listdir(KerrCirc_wave_path)
 
-file_list = ["Kerr_wave_l10_a0.99_p6.858234_T1_dt2.h5", "Kerr_wave_l10_a0.99_p10.031492_T4_dt2.h5"]
+file_list = ["Kerr_wave_l10_a0.99_p6.858234_T1_dt2.h5", "Kerr_wave_l10_a0.99_p10.031492_T4_dt2_V2.h5"]
 
 for file1 in file_list:
     with h5py.File(KerrCirc_wave_path + file1, "r") as f:
@@ -133,7 +133,7 @@ for file1 in file_list:
                 verticalalignment='bottom', bbox=props)
     fig.suptitle(f"Waveforms comparison for {T_obs:.1f} year long inspiral", fontsize=title_fontsize, y=0.94)
     plt.tight_layout()
-    plt.savefig(f"waveforms_comparison_Tobs{T_obs}.pdf")
+    plt.savefig(f"waveforms_comparison_Tobs{T_obs}_V2.pdf")
 
 
 
