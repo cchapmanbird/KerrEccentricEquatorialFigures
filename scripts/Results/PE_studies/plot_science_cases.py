@@ -48,7 +48,7 @@ custom_rcParams = {
         'patch.linewidth': 1,
         'hatch.linewidth': 1,
         'grid.linestyle': 'dashed',
-        'savefig.dpi' : 200,
+        'savefig.dpi' : 300,
         'savefig.format' : 'pdf',
         'savefig.bbox' : 'tight',
         'savefig.transparent' : True,
@@ -118,7 +118,7 @@ STRONG_FIELD_EMRI_PARAMS = dict(
     label = "Strong_field_emri"
 )
 
-EMRI_PARAMS = dict(
+PROGRADE_EMRI_PARAMS = dict(
     M=1e6,
     mu=1e1,
     a=0.998,
@@ -134,8 +134,28 @@ EMRI_PARAMS = dict(
     Phi_theta0=0.0,
     Phi_r0=3.0,
     dt=5.0,
-    label = "emri"
+    label = "Prograde emri"
 )
+
+RETROGRADE_EMRI_PARAMS = dict(
+    M=1e5,
+    mu=1e1,
+    a=0.5,
+    p0=7.7275,
+    e0=0.8,
+    x_I0=-1.0,
+    dist=1,
+    qS=0.5,
+    phiS=1.2,
+    qK=0.8,
+    phiK=0.2,
+    Phi_phi0=1.0,
+    Phi_theta0=0.0,
+    Phi_r0=3.0,
+    dt=5.0,
+    label = "Retrograde emri"
+)
+
 
 def process_label(label):
     """
@@ -309,8 +329,8 @@ def produce_plot(logger,
         
         axs[1].plot(t_end, hp_end)
         if plot_hx:
-            axs[0].plot(t_start, hc_start, ls='--', label=r"$h_\times$")
-            axs[1].plot(t_end, hc_end, ls='--')
+            axs[0].plot(t_start, hc_start, ls='--', label=r"$h_\times$", rasterized=True)   
+            axs[1].plot(t_end, hc_end, ls='--', rasterized=True)    
 
         # Set the x-axis limits
         axs[0].set_xlim(-1 , LEFT_END_SECONDS)
@@ -333,7 +353,7 @@ def produce_plot(logger,
         axs[-1,0].set_xlabel("Time [s]")
         axs[-1,1].set_xlabel("Time [s]")
 
-    all_dicts = [LIGHT_IMRI_PARAMS, HEAVY_IMRI_PARAMS, STRONG_FIELD_EMRI_PARAMS, EMRI_PARAMS]#[::-1]
+    all_dicts = [LIGHT_IMRI_PARAMS, HEAVY_IMRI_PARAMS, STRONG_FIELD_EMRI_PARAMS, PROGRADE_EMRI_PARAMS]#[::-1]
     fill_figure(axes, all_dicts)
 
     #remove x ticks from the top row
@@ -356,8 +376,8 @@ if __name__ == "__main__":
 
     use_gpu = True
     inspiral_kwargs = {'flux_output_convention':'ELQ'}
-    savename = 'waveform_plots/time_domain/science_cases.pdf'
-    figsize = (16, 12)
+    savename = 'waveform_plots/time_domain/time_snapshots.pdf'
+    figsize = (24, 16)
     plot_hx = False
     spline = True
 

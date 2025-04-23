@@ -390,7 +390,9 @@ if __name__ == '__main__':
 
     zmax = min(zmax, 19.0)# take care of stuff blowing up
     if args['plot_low_ecc']:
-        zmax +=2 #make space for the legend
+        zmax +=1.5 #make space for the legend
+    else:
+        zmax += 0.1
 
     ax.set_ylim(0., zmax)
     plt.savefig(savename, dpi=300)
