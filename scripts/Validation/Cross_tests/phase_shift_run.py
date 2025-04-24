@@ -22,7 +22,7 @@ traj_few = EMRIInspiral(func = SchwarzEccFlux, integrate_constants_of_motion=Fal
 traj_Kerr_ecc = EMRIInspiral(func= KerrEccEqFlux, integrate_constants_of_motion=False) 
 
 
-output_file = "final_phase_across_models_full.json"
+output_file = "final_phase_across_models_full_newmass.json"
 if os.path.exists(output_file):
     os.remove(output_file)
     print("old file removed")
@@ -32,8 +32,13 @@ if os.path.exists(output_file):
 
 M = 1e6
 mu = 1e1
+
+MM = M+mu
+mumu = M*mu/(M+mu)    # for tje new mass convention as input for the BHPWave
+
+
 dt = 1.0
-dtz = 40.0 # this is to have less number of point for Zach's traj
+dtz = 5.0 # this is to have less number of point for Zach's traj
 T = 4.0
 e0 = 0.0
 Y0 = 1.0
@@ -50,7 +55,7 @@ print("mass in second from Zach: ", Mt2st_BHPWave,'\n', "mass in second from FEW
 
 ##### loading saved data form the old FEW Kerr circular version
 path_amp_plots = os.getcwd() + '/'#"/home/hkhalvati/Downloads/KerrEccentricEquatorialFigures/scripts/Results/Cross_tests/"
-traj_KerrCirc_result = np.loadtxt(path_amp_plots + "Traj_KerrCirc_full.txt")
+traj_KerrCirc_result = np.loadtxt(path_amp_plots + "Traj_KerrCirc_full_newmass.txt")
 
 
 a_arr = np.unique(traj_KerrCirc_result[:,0])
@@ -67,7 +72,7 @@ for aa in a_arr:
     print(f"from the KerrCirc data file -> p0:{p0} for a = {aa}")
 
     ###### Run the BHPWave traj for the same spin
-    BHPWave_traj_results = traj_BHPWave(M, mu, aa, p0, dt=dtz, T=T, num_threads=num_threads)
+    BHPWave_traj_results = traj_BHPWave(MM, mumu, aa, p0, dt=dtz, T=T, num_threads=num_threads)
     Phi_phi_BHPWave = BHPWave_traj_results.inspiral_data.phase
     t_BHPWave = BHPWave_traj_results.inspiral_data.time
     p_BHPWave = BHPWave_traj_results.inspiral_data.radius
