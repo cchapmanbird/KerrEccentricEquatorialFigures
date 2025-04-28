@@ -1,29 +1,0 @@
-
-La version 24.3.0 de conda est maintenant la version par defaut.
-
-Pour utiliser la version 22.11.1, utilisez la commande :
-
-module load conda/22.11.1
-
-load conda/24.3.0  : OK 
-unload conda/24.3.0  : OK 
-
-La version 24.3.0 de conda est maintenant la version par defaut.
-
-Pour utiliser la version 22.11.1, utilisez la commande :
-
-module load conda/22.11.1
-
-load conda/24.3.0  : OK 
-unload cuda/12.4.1  : OK 
-load cuda/12.4.1  : OK 
-/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/eps_e0_heatmap_mismatch_study.py:96: SyntaxWarning: invalid escape sequence '\i'
-  """
-0it [00:00, ?it/s]1it [00:17, 17.98s/it]2it [00:38, 19.58s/it]3it [00:59, 20.18s/it]4it [01:20, 20.28s/it]5it [01:40, 20.37s/it]6it [02:02, 20.98s/it]7it [02:24, 21.33s/it]8it [02:47, 21.74s/it]9it [03:08, 21.70s/it]10it [03:30, 21.64s/it]11it [03:52, 21.69s/it]12it [04:14, 21.70s/it]13it [04:36, 22.08s/it]14it [04:59, 22.25s/it]15it [05:22, 22.39s/it]16it [05:45, 22.78s/it]17it [06:08, 22.69s/it]18it [06:31, 22.76s/it]19it [06:55, 23.11s/it]20it [07:18, 23.14s/it]21it [07:42, 23.43s/it]22it [08:05, 23.36s/it]23it [08:30, 23.67s/it]24it [08:54, 23.81s/it]25it [09:18, 23.78s/it]26it [09:41, 23.79s/it]27it [10:05, 23.82s/it]28it [10:29, 23.82s/it]29it [10:53, 23.96s/it]30it [11:19, 24.51s/it]31it [11:45, 24.95s/it]32it [12:11, 25.21s/it]33it [12:38, 25.70s/it]34it [13:05, 26.28s/it]35it [13:33, 26.70s/it]36it [14:01, 27.14s/it]37it [14:30, 27.58s/it]38it [14:59, 28.03s/it]39it [15:28, 28.45s/it]40it [15:59, 29.22s/it]40it [15:59, 24.00s/it]
-Traceback (most recent call last):
-  File "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/eps_e0_heatmap_mismatch_study.py", line 342, in <module>
-    np.save("data/mismatch_vals_"+labels[k][0] + "_" + labels[k][1], mismatch_vals)
-  File "/work/scratch/env/burkeol/.conda/envs/kerr_hackathon_env/lib/python3.12/site-packages/numpy/lib/npyio.py", line 542, in save
-    file_ctx = open(file, "wb")
-               ^^^^^^^^^^^^^^^^
-FileNotFoundError: [Errno 2] No such file or directory: 'data/mismatch_vals_1e5_1.npy'

@@ -1,24 +1,0 @@
-unload conda/24.3.0  : OK 
-
-La version 24.3.0 de conda est maintenant la version par defaut.
-
-Pour utiliser la version 22.11.1, utilisez la commande :
-
-module load conda/22.11.1
-
-load conda/24.3.0  : OK 
-unload conda/24.3.0  : OK 
-
-La version 24.3.0 de conda est maintenant la version par defaut.
-
-Pour utiliser la version 22.11.1, utilisez la commande :
-
-module load conda/22.11.1
-
-load conda/24.3.0  : OK 
-load cuda/12.4.1  : OK 
-/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/eps_e0_heatmap_mismatch_study.py:96: SyntaxWarning: invalid escape sequence '\i'
-  """
-0it [00:00, ?it/s]1it [00:14, 14.80s/it]2it [00:31, 16.18s/it]3it [00:49, 16.89s/it]4it [01:07, 17.09s/it]5it [01:25, 17.55s/it]6it [01:44, 17.96s/it]7it [02:02, 18.00s/it]8it [02:20, 18.04s/it]9it [02:38, 18.07s/it]10it [02:57, 18.49s/it]11it [03:16, 18.63s/it]12it [03:35, 18.70s/it]13it [03:54, 18.63s/it]14it [04:13, 18.82s/it]15it [04:34, 19.40s/it]16it [04:53, 19.37s/it]17it [05:13, 19.63s/it]18it [05:33, 19.65s/it]19it [05:53, 19.66s/it]20it [06:14, 20.05s/it]21it [06:34, 20.05s/it]22it [06:54, 20.24s/it]23it [07:15, 20.33s/it]24it [07:36, 20.60s/it]25it [07:58, 21.06s/it]26it [08:21, 21.43s/it]27it [08:43, 21.71s/it]28it [09:06, 22.06s/it]29it [09:30, 22.58s/it]30it [09:54, 23.13s/it]31it [10:19, 23.79s/it]32it [10:46, 24.55s/it]32it [10:46, 20.19s/it]
-0it [00:00, ?it/s]1it [00:14, 14.11s/it]2it [00:30, 15.69s/it]3it [00:47, 16.30s/it]4it [01:04, 16.49s/it]5it [01:21, 16.76s/it]6it [01:38, 16.79s/it]7it [01:56, 16.98s/it]8it [02:12, 16.87s/it]9it [02:30, 17.04s/it]10it [02:47, 17.20s/it]11it [03:05, 17.28s/it]12it [03:23, 17.44s/it]13it [03:40, 17.50s/it]14it [03:59, 17.80s/it]15it [04:17, 17.95s/it]16it [04:36, 18.32s/it]17it [04:56, 18.73s/it]18it [05:15, 18.89s/it]19it [05:35, 19.11s/it]20it [05:55, 19.32s/it]21it [06:15, 19.70s/it]22it [06:36, 20.09s/it]23it [06:58, 20.52s/it]24it [07:19, 20.87s/it]25it [07:42, 21.35s/it]26it [08:05, 21.82s/it]27it [08:28, 22.19s/it]28it [08:51, 22.50s/it]29it [09:15, 23.06s/it]30it [09:40, 23.62s/it]31it [10:06, 24.16s/it]32it [10:32, 24.83s/it]32it [10:32, 19.77s/it]
-0it [00:00, ?it/s]1it [00:13, 13.23s/it]2it [00:29, 14.89s/it]3it [00:45, 15.43s/it]4it [01:01, 15.69s/it]5it [01:17, 15.94s/it]6it [01:34, 16.20s/it]7it [01:51, 16.43s/it]8it [02:08, 16.69s/it]9it [02:26, 16.97s/it]10it [02:44, 17.25s/it]11it [03:02, 17.57s/it]12it [03:21, 17.88s/it]13it [03:39, 18.06s/it]14it [03:58, 18.26s/it]15it [04:17, 18.49s/it]16it [04:36, 18.78s/it]17it [04:56, 19.20s/it]18it [05:17, 19.50s/it]19it [05:37, 19.79s/it]20it [05:58, 20.24s/it]21it [06:20, 20.63s/it]22it [06:42, 21.01s/it]23it [07:04, 21.43s/it]24it [07:27, 21.93s/it]25it [07:51, 22.53s/it]26it [08:15, 23.01s/it]27it [08:40, 23.51s/it]28it [09:05, 24.04s/it]28it [09:05, 19.49s/it]
