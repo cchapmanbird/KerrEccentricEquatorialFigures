@@ -34,7 +34,7 @@ def write_psd_file(model='scirdv1',
     
     assert channels in [None,  'A', 'AE', 'AET'], "channels must be None, 'A', 'AE', or 'AET'"
     if include_foreground:
-        assert 'stochastic_params' in kwargs.keys(), "`stochastic_params = Tobs [s]` must be provided if include_foreground is True"
+        assert 'stochastic_params' in kwargs.keys(), "`stochastic_params = List(Tobs) [s]` must be provided if include_foreground is True"
 
     freqs = np.linspace(0, 1, 100001)[1:]
     
@@ -112,7 +112,6 @@ def load_psd_from_file(psd_file, xp=np):
             ]
         )
         return xp.squeeze(out) # remove the extra dimension if there is only one channel
-    #breakpoint()
     return psd_clipped    
 
 def load_psd(
@@ -195,4 +194,3 @@ if __name__ == "__main__":
     fn = load_psd(filename)
 
     f = np.linspace(0.0001, 1, 1000)
-    breakpoint()
