@@ -7,38 +7,43 @@ import time
 import matplotlib.pyplot as plt
 from tqdm import tqdm as tqdm
 
-# from lisatools.sensitivity import noisepsd_AE2,noisepsd_T # Power spectral densities
+# Cosmology stuff
+import astropy.units as u
+from astropy.cosmology import Planck18, z_at_value; cosmo = Planck18
+
+def get_redshift(distance):
+    return (z_at_value(cosmo.luminosity_distance, distance * u.Gpc )).value
+
+def get_distance(redshift):
+    return cosmo.luminosity_distance(redshift).to(u.Gpc).value
+
 from fastlisaresponse import ResponseWrapper             # Response
 
-from lisatools.sensitivity import get_sensitivity
-from lisatools.utils.utility import AET
-from lisatools.detector import scirdv1
+# from lisatools.sensitivity import get_sensitivity
+# from lisatools.utils.utility import AET
 from lisatools.detector import EqualArmlengthOrbits
-from lisatools.sensitivity import AE1SensitivityMatrix
 
+
+from few.trajectory.inspiral import EMRIInspiral
+from few.utils.utility import get_p_at_t
+from few.utils.geodesic import get_separatrix
 
 # Import relevant EMRI packages
 from few.waveform import GenerateEMRIWaveform
 from few.trajectory.ode import PN5, SchwarzEccFlux, KerrEccEqFlux
-
-from few.trajectory.inspiral import EMRIInspiral
-from few.utils.utility import get_separatrix, get_p_at_t
-
-from few.summation.directmodesum import DirectModeSum 
-from few.summation.interpolatedmodesum import InterpolatedModeSum
-from few.utils.modeselector import ModeSelector, NeuralModeSelector
-
-# Import features from eryn
-from eryn.ensemble import EnsembleSampler
-from eryn.moves import StretchMove
-from eryn.prior import ProbDistContainer, uniform_dist
-from eryn.backends import HDFBackend
+run_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/Results/low_e0_mismatch/"
+sys.path.append("/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/Results/config_files/")
+from psd_utils import (write_psd_file, load_psd_from_file, load_psd)
 
 xp = cp
 N_channels = 2
-MAKE_PLOT = True
+MAKE_PLOT = False
 # Import parameters
 use_gpu = True
+if use_gpu:
+    xp = cp 
+else:
+    xp = np
 
 YRSID_SI = 31558149.763545603
 
@@ -52,7 +57,7 @@ tdi_kwargs_esa = dict(
     order=order,
     tdi=tdi_gen,
     tdi_chan="AE",
-)  # could do "AET"
+)  
 
 index_lambda = 8
 index_beta = 7
@@ -62,35 +67,6 @@ t0 = 20000.0  # throw away on both ends when our orbital information is weird
 
 TDI_channels = ['TDIA','TDIE']
 N_channels = len(TDI_channels)
-
-def noise_PSD_AE(f, TDI = 'TDI2'):
-    """
-    Inputs: Frequency f [Hz]
-    Outputs: Power spectral density of noise process for TDI1 or TDI2.
-
-    TODO: Incorporate the background!! 
-    """
-    # Define constants
-    L = 2.5e9
-    c = 299_792_458 # CORRECT
-    # c = 299758492
-    x = 2*np.pi*(L/c)*f
-    
-    # Test mass acceleration
-    Spm = (3e-15)**2 * (1 + ((4e-4)/f)**2)*(1 + (f/(8e-3))**4) * (1/(2*np.pi*f))**4 * (2 * np.pi * f/ c)**2
-    # Optical metrology subsystem noise 
-    Sop = (15e-12)**2 * (1 + ((2e-3)/f)**4 )*((2*np.pi*f)/c)**2
-    
-    S_val = (2 * Spm *(3 + 2*np.cos(x) + np.cos(2*x)) + Sop*(2 + np.cos(x))) 
-    
-    if TDI == 'TDI1':
-        S = 8*(np.sin(x)**2) * S_val
-    elif TDI == 'TDI2':
-        S = 32*np.sin(x)**2 * np.sin(2*x)**2 * S_val
-
-    S[S < S[0]] = S[0]
-
-    return cp.asarray(S)
 
 def zero_pad(data):
     """
@@ -115,18 +91,18 @@ def inner_prod(sig1_f,sig2_f,N_t,delta_t,PSD):
     sig2_f_conj = xp.conjugate(sig2_f)
     return prefac * xp.real(xp.sum((sig1_f * sig2_f_conj)/PSD))
 
-def SNR_function(sig1_t, PSD, dt, N_channels = 2):
+def SNR_function(sig1_t, PSD_interp, dt, N_channels = 2):
 
     sig1_f = [xp.fft.rfft(zero_pad(sig1_t[i])) for i in range(N_channels)]
     N_t = len(zero_pad(sig1_t[0]))
     
-    freq_np = xp.asnumpy(xp.fft.rfftfreq(N_t, dt))
+    freq = xp.fft.rfftfreq(N_t, dt)
 
-    freq_np[0] = freq_np[1] 
+    freq[0] = freq[1] 
 
-    PSD = 2 * [xp.asarray(noise_PSD_AE(freq_np))]
+    PSD_AE_array = PSD_interp(freq)
 
-    SNR2 = xp.asarray([inner_prod(sig1_f[i], sig1_f[i], N_t, dt,PSD[i]) for i in range(N_channels)])
+    SNR2 = xp.asarray([inner_prod(sig1_f[i], sig1_f[i], N_t, dt,PSD_AE_array[i]) for i in range(N_channels)])
 
     SNR = xp.sum(SNR2)**(1/2)
 
@@ -151,11 +127,12 @@ def mismatch_function(sig1_t,sig2_t, PSD, dt,N_channels=2):
 ## ===================== Set up parameters ========================================
 
 M = 1e6; mu = 25; a = 0.998; p0 = 10.628; e0 = 0.1; x_I0 = 1.0
-dist = 5.0; 
-qS = 0.5 ; phiS = 1.2; qK = 0.8; phiK = 0.2; 
-Phi_phi0 = 1.0; Phi_theta0 = 0.0; Phi_r0 = 3.0
+SNR_choice = 50.0;
 
-delta_t = 5.0; T = 2.0
+qS = 0.5 ; phiS = 1.2; qK = 0.8; phiK = 0.2; 
+Phi_phi0 = 2.0; Phi_theta0 = 0.0; Phi_r0 = 3.0
+
+delta_t = 10.0; T = 2.0
 
 ## ===================== CHECK TRAJECTORY ====================
 # 
@@ -176,12 +153,6 @@ p_new = get_p_at_t(
     traj,
     T,
     traj_args,
-    index_of_p=3,
-    index_of_a=2,
-    index_of_e=4,
-    index_of_x=5,
-    xtol=2e-12,
-    rtol=8.881784197001252e-16,
     bounds=None
 )
 
@@ -197,7 +168,8 @@ print("Separatrix : ", get_separatrix(a, e_traj[-1], Y_traj[-1]))
 print("Separation between separatrix and final p = ",abs(get_separatrix(a,e_traj[-1],1.0) - p_traj[-1]))
 print("Now going to load in class")
 
-inspiral_kwargs = {"err":1e-12}
+inspiral_kwargs = {"err":1e-11}
+
 Kerr_waveform = GenerateEMRIWaveform(
         "FastKerrEccentricEquatorialFlux",
         sum_kwargs=dict(pad_output=True), 
@@ -225,39 +197,59 @@ EMRI_TDI_Model = ResponseWrapper(
 
 ####=======================True Responsed waveform==========================
 
-params = [M, mu, a, p0, 0.0, 1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
+params_unnormed = [M, mu, a, p0, 0.0, 1.0, 1.0, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
 
 print("Running the truth waveform")
-Kerr_TDI_waveform_circ = EMRI_TDI_Model(*params, eps = 1e-5)
+Kerr_TDI_waveform_circ_unnormed = EMRI_TDI_Model(*params_unnormed)
 
 # Taper and then zero_pad signal
-Kerr_FEW_TDI_pad = [zero_pad(Kerr_TDI_waveform_circ[i]) for i in range(N_channels)]
+Kerr_FEW_TDI_pad_unnormed = [zero_pad(Kerr_TDI_waveform_circ_unnormed[i]) for i in range(N_channels)]
 
-N_t = len(Kerr_FEW_TDI_pad[0])
+N_t = len(Kerr_FEW_TDI_pad_unnormed[0])
 
 # Compute signal in frequency domain
-Kerr_TDI_fft = xp.asarray([xp.fft.rfft(waveform) for waveform in Kerr_FEW_TDI_pad])
+Kerr_TDI_fft_unnormed = xp.asarray([xp.fft.rfft(waveform) for waveform in Kerr_FEW_TDI_pad_unnormed])
 
 freq = xp.fft.rfftfreq(N_t,delta_t)
 freq[0] = freq[1]   # To "retain" the zeroth frequency
 
 # Define PSDs
-freq_np = xp.asnumpy(freq)
+# First, write PSD to a file.
 
-PSD_AET = 2*[noise_PSD_AE(freq_np)]
+PSD_filename = "tdi2_AE_w_background.npy"
+kwargs_PSD = {"stochastic_params": [T*YRSID_SI]} # We include the background
+
+write_PSD = write_psd_file(model='scirdv1', channels='AE', 
+                           tdi2=True, include_foreground=True, 
+                           filename = run_direc + PSD_filename, **kwargs_PSD)
+
+PSD_AE_interp = load_psd_from_file(run_direc + PSD_filename, xp=xp)
+
+PSD_AE = PSD_AE_interp(freq)
 
 # Compute optimal matched filtering SNR
 
-SNR_Kerr_FEW = SNR_function(Kerr_TDI_waveform_circ, PSD_AET, delta_t, N_channels = 2)
+SNR_Kerr_FEW_dL_1 = SNR_function(Kerr_TDI_waveform_circ_unnormed, PSD_AE_interp, delta_t, N_channels = 2)
 
-print("SNR for Kerr_FEW is",SNR_Kerr_FEW)
+print("SNR for Kerr_FEW with dL_1 ",SNR_Kerr_FEW_dL_1)
 
-mismatch_EMRI = mismatch_function(Kerr_TDI_waveform_circ,Kerr_TDI_waveform_circ, PSD_AET, delta_t,N_channels=2)
+dist = (SNR_Kerr_FEW_dL_1/SNR_choice)
+
+check_redshift = get_redshift(xp.asnumpy(dist))
+
+Kerr_TDI_fft = (1/dist) * Kerr_TDI_fft_unnormed
+Kerr_TDI_waveform_circ = (1/dist) * xp.asarray(Kerr_TDI_waveform_circ_unnormed)
+
+SNR_Kerr_FEW = SNR_function(Kerr_TDI_waveform_circ, PSD_AE_interp, delta_t, N_channels = 2)
+
+print(f"SNR for Kerr_FEW is {SNR_Kerr_FEW} at distance {dist}, with redshift z = {check_redshift}")
+
+mismatch_EMRI = mismatch_function(Kerr_TDI_waveform_circ,Kerr_TDI_waveform_circ, PSD_AE, delta_t, N_channels=2)
 # ================== PLOT THE A CHANNEL ===================
 
 if MAKE_PLOT == True:
-    plt.loglog(freq_np[1:], freq_np[1:]*abs(cp.asnumpy(Kerr_TDI_fft[0][1:])), label = "Waveform frequency domain")
-    plt.loglog(freq_np[1:], np.sqrt(freq_np[1:] * cp.asnumpy(PSD_AET[0][1:])), label = "TDI2 PSD")
+    plt.loglog(freq_np[1:], freq_np[1:]*abs(xp.asnumpy(Kerr_TDI_fft[0][1:])), label = "Waveform frequency domain")
+    plt.loglog(freq_np[1:], np.sqrt(freq_np[1:] * xp.asnumpy(PSD_AET[0][1:])), label = "TDI2 PSD")
     plt.xlabel(r'Frequency [Hz]', fontsize = 30)
     plt.ylabel(r'Magnitude',fontsize = 30)
     plt.title(fr'$(M, \mu, a, p_0, e_0, D_L)$ = {M,mu,p0,a, e0,dist}')
@@ -268,22 +260,25 @@ if MAKE_PLOT == True:
 
 # Now try to compute mismatches as we change e0. 
 
-err = [1e-11, 1e-12, 1e-13]
+err = [1e-11]
 k = 0
 for err_val in err:
     inspiral_kwargs = {"err":err_val}
     waveform_kwargs = {"inspiral_kwargs":inspiral_kwargs}
-    little_e0 = np.logspace(-8, -3, 50) 
+    little_e0 = np.logspace(-8, -3, 30) 
 
     mismatch_vec = []
     for ecc in tqdm(little_e0):
         params = [M, mu, a, p0, ecc, 1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0] 
         EMRI_TDI_perturb_e0 = EMRI_TDI_Model(*params, eps = 1e-5, **waveform_kwargs)
 
-        mismatch_val = mismatch_function(EMRI_TDI_perturb_e0,Kerr_TDI_waveform_circ, PSD_AET, delta_t,N_channels=2)
-        mismatch_vec.append(xp.asnumpy(mismatch_val))
+        mismatch_val = mismatch_function(EMRI_TDI_perturb_e0,Kerr_TDI_waveform_circ, PSD_AE, delta_t,N_channels=2)
+        mismatch_vec.append(mismatch_val)
 
-    mismatch_vec_np = cp.asnumpy(mismatch_vec)
+    if use_gpu:
+        mismatch_vec_np = np.array([cp.asnumpy(x) for x in mismatch_vec])
+    else:
+        mismatch_vec_np = np.array(mismatch_vec)
 
     if err_val == 1e-11:
         # Example data (replace with your actual values)
@@ -313,16 +308,15 @@ for err_val in err:
         e0_smooth = np.logspace(-6, -3, 150)  # Log-spaced x-values
         mismatch_fit = fitted_curve(e0_smooth,m,b)
 
+# Save Data
 
+breakpoint()
+
+np.save(run_direc + "/data_for_plots/" + "SNR_choice.npy", np.array(SNR_choice))
+np.save(run_direc + "/data_for_plots/" + "e0_vec.npy", little_e0)
+np.save(run_direc + "/data_for_plots/" + "mismatch_vec.npy", mismatch_vec_np)
+
+np.save(run_direc + "/data_for_plots/" + "e0_for_fit.npy", e0_smooth)
+np.save(run_direc + "/data_for_plots/" + "mismatch_fit.npy", mismatch_fit)
     
-    plt.loglog(little_e0, mismatch_vec_np, 'o', ms = 5, label = f"Error = {err_val}")
-    if k == 2:
-        plt.loglog(e0_smooth, mismatch_fit, linestyle = 'dashed', c = 'red', label = r"$\propto (e_{0})^{4}$")
-        plt.axhline(y = (1/(2*cp.asnumpy(SNR_Kerr_FEW)**2)), c = 'black', linestyle = 'dashed', label = r'$1/(2\rho^{2})$')
-    plt.xlabel(r'Eccentricity', fontsize = 16)
-    plt.ylabel(r'$\mathcal{M}$', fontsize = 16)
-    plt.title(r'Low eccentricity limit', fontsize = 16)
-    plt.legend()
-    plt.grid(True)
-    k+=1
-plt.savefig("plots/low_e0_plots/low_e0_mismatch_err_tol.png",bbox_inches = "tight")
+print("End :) ")
