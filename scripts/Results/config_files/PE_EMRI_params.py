@@ -12,22 +12,22 @@ except ImportError:
     use_gpu = False
 
 
-# Extreme point for TDI2, SNR = 22. EMRI
-# M = 1e6; mu = 10; a = 0.998; p0 = 7.7275; e0 = 0.73; x_I0 = 1.0
-# SNR_choice = 50.0;
+# EMRI source, eps ~ 1e-5, SNR 50, prograde
+M = 1e6; mu = 10; a = 0.998; p0 = 7.7275; e0 = 0.73; x_I0 = 1.0
+SNR_choice = 50.0;
+qS = 0.8 ; phiS = 2.2; qK = 1.6; phiK = 1.2; 
+Phi_phi0 = 2.0; Phi_theta0 = 0.0; Phi_r0 = 3.0
+
+delta_t = 5.0; T = 2.0
+
+# EMRI source, eps ~ 1e-4, SNR 30, retrograde
+
+# M = 1e5; mu = 10; a = 0.5; p0 = 26.19; e0 = 0.8; x_I0 = -1.0;
+# SNR_choice = 30.0;
 # qS = 0.5 ; phiS = 1.2; qK = 0.8; phiK = 0.2; 
 # Phi_phi0 = 2.0; Phi_theta0 = 0.0; Phi_r0 = 3.0
 
-# delta_t = 5.0; T = 2.0
-
-$10^5$ & $10$ & $0.5$ & $26.19$& $0.8\,(0.195)$
-# EMRI source, TDI2, SNR = 50,
-
-M = 1e5; mu = 10; a = 0.5; p0 = 26.19; e0 = 0.8; x_I0 = -1.0
-qS = 0.5 ; phiS = 1.2; qK = 0.8; phiK = 0.2; 
-Phi_phi0 = 2.0; Phi_theta0 = 0.0; Phi_r0 = 3.0
-
-delta_t = 5.0; T = 2.0;
+# delta_t = 5.0; T = 2.0;
 
 
 # MEGA IMRI -- Pints. TDI2, SNR = 
