@@ -6,14 +6,12 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 
-# from lisatools.sensitivity import noisepsd_AE2,noisepsd_T # Power spectral densities
 from fastlisaresponse import ResponseWrapper             # Response
 
-from lisatools.sensitivity import get_sensitivity
-from lisatools.utils.utility import AET
-from lisatools.detector import scirdv1
+# from lisatools.utils.utility import AET
+# from lisatools.detector import scirdv1
 from lisatools.detector import EqualArmlengthOrbits
-from lisatools.sensitivity import AE1SensitivityMatrix
+# from lisatools.sensitivity import AE1SensitivityMatrix
 
 # Cosmology stuff
 import astropy.units as u
@@ -32,10 +30,6 @@ from few.trajectory.ode import PN5, SchwarzEccFlux, KerrEccEqFlux
 from few.trajectory.inspiral import EMRIInspiral
 from few.utils.utility import get_p_at_t
 from few.utils.geodesic import get_separatrix
-
-from few.summation.directmodesum import DirectModeSum 
-from few.summation.interpolatedmodesum import InterpolatedModeSum
-from few.utils.modeselector import ModeSelector, NeuralModeSelector
 
 # Import features from eryn
 from eryn.ensemble import EnsembleSampler
@@ -110,7 +104,7 @@ def llike(params):
     a_val =  float(params[2])            
     p0_val = float(params[3])
     e0_val = float(params[4])
-    x_I0_val = 1.0 
+    x_I0_val = x_I0 
     
     # Luminosity distance 
     D_val = float(params[5])
@@ -126,20 +120,9 @@ def llike(params):
     Phi_theta0_val = Phi_theta0
     Phi_r0_val = float(params[11])
 
-    # Deal with retrograde orbits:
-
-    # print("Original value: (",a_val,Y0_val,")")
-    # if a_val < 0:
-    #     a_val *= -1.0
-    #     Y0_val *= -1.0
-    # print("New value: (",a_val,Y0_val,")")
-
-    # Propose new waveform model
-    # Recover with relativistic model 
-    
     waveform_prop = EMRI_TDI_Model(M_val, mu_val, a_val, p0_val, e0_val, 
                                   x_I0_val, D_val, qS_val, phiS_val, qK_val, phiK_val,
-                                    Phi_phi0_val, Phi_theta0_val, Phi_r0_val, mode_selection_threshold = 1e-5)  # EMRI waveform across A, E and T.
+                                    Phi_phi0_val, Phi_theta0_val, Phi_r0_val, mode_selection_threshold = 1e-2)  # EMRI waveform across A, E and T.
 
     # Taper and then zero pad. 
     EMRI_AET_w_pad_prop = [zero_pad(waveform_prop[i]) for i in range(N_channels)]
@@ -164,14 +147,10 @@ xp = cp
 # 
 traj = EMRIInspiral(func=KerrEccEqFlux)  # Set up trajectory module, pn5 AAK
 
-# Compute trajectory 
-if a < 0:
-    a *= -1.0 
-    Y0 *= -1.0
-t_traj, p_traj, e_traj, Y_traj, Phi_phi_traj, Phi_r_traj, Phi_theta_traj = traj(M, mu, a, p0, e0, x_I0,
+t_traj, p_traj, e_traj, xI_traj, Phi_phi_traj, Phi_r_traj, Phi_theta_traj = traj(M, mu, a, p0, e0, x_I0,
                                              Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T)
 
-traj_args = [M, mu, a, e_traj[0], Y_traj[0]]
+traj_args = [M, mu, a, e_traj[0], xI_traj[0]]
 index_of_p = 3
 # Check to see what value of semi-latus rectum is required to build inspiral lasting T years. 
 p_new = get_p_at_t(
@@ -188,9 +167,9 @@ if p0 < p_new:
 else:
     print("Body is not plunging.") 
 print("Final point in semilatus rectum achieved is", p_traj[-1])
-print("Separatrix : ", get_separatrix(a, e_traj[-1], Y_traj[-1]))
+print("Separatrix : ", get_separatrix(a, e_traj[-1], xI_traj[-1]))
 
-print("Separation between separatrix and final p = ",abs(get_separatrix(a,e_traj[-1],1.0) - p_traj[-1]))
+print("Separation between separatrix and final p = ",abs(get_separatrix(a,e_traj[-1],x_I0) - p_traj[-1]))
 print(f"Final eccentricity = {e_traj[-1]}")
 print("Now going to load in class")
 
@@ -226,7 +205,7 @@ EMRI_TDI_Model = ResponseWrapper(
 # We set d_L = 1.0 for now. We will choose luminosity distance according to a 
 # specific choice of SNR later. 
 
-params_unnormed = [M, mu, a, p0, e0, 1.0, 1.0, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
+params_unnormed = [M, mu, a, p0, e0, x_I0, 1.0, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
 
 print("Running the truth waveform")
 Kerr_TDI_waveform_unnormed = EMRI_TDI_Model(*params_unnormed, mode_selection_threshold = 0.0) # Inject waveform with all the modes!
@@ -321,15 +300,11 @@ ntemps = 1             # Number of temperatures used for parallel tempering sche
 
 tempering_kwargs=dict(ntemps=ntemps)  # Sampler requires the number of temperatures as a dictionary
 
-d = 0.0 # A parameter that can be used to dictate how close we want to start to the true parameters
+d = 1.0 # A parameter that can be used to dictate how close we want to start to the true parameters
 # Useful check: If d = 0 and noise_f = 0, llike(*params) = 0.0, exactly!!
 
 # We start the sampler exceptionally close to the true parameters and let it run. This is reasonable 
 # if and only if we are quantifying how well we can measure parameters. We are not performing a search. 
-
-if x_I0 < 0:
-    a *= -1.0 
-    x_I0 *= -1.0
 
 # Intrinsic Parameters
 
@@ -408,10 +383,9 @@ if ntemps > 1:
 else:
     print("Value of starting log-likelihood points", llike(start[0])) 
 
-breakpoint()
 os.chdir('/work/scratch/data/burkeol/kerr_few_paper/paper_runs/MCMC/')
 # Paper run -- EMRI
-fp = "MCMC_samps_M_1e6_mu_10_a_0p998_e0_0p75_p0_7p7275_e0_0p73_SNR_50_dt_5_T_2_eps_0p0_recov_eps_1e-5_dt_5_T_2_TDI2_w_background_equal_arms.h5"
+fp = "MCMC_samps_M_1e6_mu_10_a_0p998_e0_0p73_p0_7p7275_e0_0p73_pro_SNR_50_dt_5_T_2_eps_0p0_recov_eps_1e-2_dt_5_T_2_TDI2_w_background_equal_arms.h5"
 backend = HDFBackend(fp)
 
 ensemble = EnsembleSampler(
