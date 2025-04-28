@@ -5,9 +5,17 @@ import os
 import sys
 sys.path.append("../")
 
-# from scipy.signal import tukey       # I'm always pro windowing.  
-
 from fastlisaresponse import ResponseWrapper             # Response
+
+# Cosmology stuff
+import astropy.units as u
+from astropy.cosmology import Planck18, z_at_value; cosmo = Planck18
+
+def get_redshift(distance):
+    return (z_at_value(cosmo.luminosity_distance, distance * u.Gpc )).value
+
+def get_distance(redshift):
+    return cosmo.luminosity_distance(redshift).to(u.Gpc).value
 
 # Import relevant EMRI packages
 from few.waveform import GenerateEMRIWaveform
@@ -19,18 +27,7 @@ from few.trajectory.inspiral import EMRIInspiral
 from few.utils.utility import get_separatrix, get_p_at_t
 
 # Import relevant EMRI packages
-from lisatools.sensitivity import get_sensitivity
-from lisatools.utils.utility import AET
-from lisatools.detector import scirdv1
 from lisatools.detector import EqualArmlengthOrbits
-from lisatools.sensitivity import AE1SensitivityMatrix
-
-
-# Import features from eryn
-from eryn.ensemble import EnsembleSampler
-from eryn.moves import StretchMove
-from eryn.prior import ProbDistContainer, uniform_dist
-from eryn.backends import HDFBackend
 
 YRSID_SI = 31558149.763545603
 
@@ -56,33 +53,6 @@ t0 = 20000.0  # throw away on both ends when our orbital information is weird
 TDI_channels = ['TDIA','TDIE']
 N_channels = len(TDI_channels)
 
-def noise_PSD_AE(f, TDI = 'TDI2'):
-    """
-    Inputs: Frequency f [Hz]
-    Outputs: Power spectral density of noise process for TDI1 or TDI2.
-
-    TODO: Incorporate the background!! 
-    """
-    # Define constants
-    L = 2.5e9
-    c = 299_792_458 # CORRECT
-    # c = 299758492
-    x = 2*np.pi*(L/c)*f
-    
-    # Test mass acceleration
-    Spm = (3e-15)**2 * (1 + ((4e-4)/f)**2)*(1 + (f/(8e-3))**4) * (1/(2*np.pi*f))**4 * (2 * np.pi * f/ c)**2
-    # Optical metrology subsystem noise 
-    Sop = (15e-12)**2 * (1 + ((2e-3)/f)**4 )*((2*np.pi*f)/c)**2
-    
-    S_val = (2 * Spm *(3 + 2*np.cos(x) + np.cos(2*x)) + Sop*(2 + np.cos(x))) 
-    
-    if TDI == 'TDI1':
-        S = 8*(np.sin(x)**2) * S_val
-    elif TDI == 'TDI2':
-        S = 32*np.sin(x)**2 * np.sin(2*x)**2 * S_val
-    
-    S[S < S[0]] = S[0]
-    return cp.asarray(S)
 
 def zero_pad(data):
     """
