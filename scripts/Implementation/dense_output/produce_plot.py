@@ -21,7 +21,7 @@ fr_ups = f["fr_ups"][:]
 fdot_ups = f["fdot_ups"][:]
 
 
-plt.figure(figsize=(5, 7), dpi=150)
+plt.figure(figsize=(5, 6.7), dpi=150)
 
 # Phase and Phase Difference
 plt.subplot(3, 2, 1)
@@ -58,8 +58,8 @@ plt.plot(t_dense, np.abs(fr_dense[:,0] - fr_ups[:,0]), c=cpal[0])
 plt.plot(t_dense, np.abs(fr_dense[:,1] - fr_ups[:,1]), c=cpal[1])
 plt.plot(t_dense, np.abs(fr_dense[:,2] - fr_ups[:,2]), c=cpal[2])
 plt.yscale('log')
+plt.tick_params(axis='x', labelbottom=False)
 plt.ylim(1e-13, 2e-9)
-plt.xlabel("Time [s]")
 plt.ylabel(r"$\Omega_\alpha^{{\rm Adaptive}} - \Omega_\alpha^{{\rm Dense}}$")
 
 # Frequency Derivative and Frequency Derivative Difference

@@ -1,0 +1,160 @@
+envs_dirs : /work/scratch/env/burkeol/.conda/envs
+pkgs_dirs : /work/scratch/data/burkeol/.conda/pkgs
+envs_dirs : /work/scratch/env/burkeol/.conda/envs
+pkgs_dirs : /work/scratch/data/burkeol/.conda/pkgs
+We require initial semi-latus rectum of  10.001277735493163 for inspiral lasting 4.0 years
+Your chosen semi-latus rectum is 10.628
+Body is not plunging.
+Final point in semilatus rectum achieved is 6.831963520273687
+Separatrix :  1.2622111800099494
+Separation between separatrix and final p =  5.569752340263738
+Now going to load in class
+Building the responses!
+Running the truth waveform
+SNR for Kerr_FEW is 21.307960299441994
+for M = 100000.0 and mu = 1.0 the value of p0 =18.376968661945295 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.37615958894942 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.373722662788357 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.369628285645348 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.363827168132403 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.35624977794556 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.346805839604563 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.33538366347924 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.32184924251067 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.306045164957908 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.287789272759095 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.266873018918226 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.243059487272504 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.216081021884094 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.185636332984778 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.15138704149265 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.112953471056326 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.069909547767605 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =18.02177658069053 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =17.968015612067248 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =17.90801797751606 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =17.841093519071393 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =17.766455781063726 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =17.6832031813311 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =17.59029477725831 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =17.486518686113868 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =17.37045024171398 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =17.240395606759947 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =17.09431420999295 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =16.92970953545155 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =16.74347110559499 for T = 4.0 yr observation
+for M = 100000.0 and mu = 1.0 the value of p0 =16.531638375538417 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =10.006791710530706 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =10.006453967938642 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =10.005434469217008 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =10.0037176926895 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =10.001277735493163 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.99807810204672 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.99407142117734 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.98919907831998 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.983390746613535 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.976563802682128 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.968622608590515 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.959457640321302 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.94894443200846 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.93694230192301 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.923292815697485 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.90781792775346 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.89031773259015 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.870567730622502 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.848315484854766 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.823276518960803 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.795129235198983 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.763508576920291 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.72799805093313 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.688119573953143 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.643320399065882 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.59295605170313 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.53626770447828 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.472351649820629 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.400117264800274 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.318227754788126 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.22501430417415 for T = 4.0 yr observation
+for M = 1000000.0 and mu = 10.0 the value of p0 =9.118347625055344 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.196749988538859 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.196663725461826 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.1963777389735455 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.195880564384749 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.195158125079103 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.194192018924531 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.192959062529709 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.191430935150574 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.189573887386164 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.187348407041903 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.184708851719802 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.181602997316271 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.177971516293428 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.173747341323641 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.1688549039246645 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.163209214401076 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.156714753455557 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.14926410725435 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.1407363220837965 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.130994857439865 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.119885058758782 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.107231007495316 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.092831531802846 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.076455131808166 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.057833439091203 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.036652647057909 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =5.01254214215577 for T = 4.0 yr observation
+for M = 10000000.0 and mu = 100.0 the value of p0 =4.985059135363257 for T = 4.0 yr observation
+Finished run in  1825.4636256694794 seconds
+[2025-03-26 00:38:12.992423184+00:00] lisa/burkeol/34891575:  Account (env) = lisa
+[2025-03-26 00:38:12.993503513+00:00] lisa/burkeol/34891575:     User (env) = burkeol
+[2025-03-26 00:38:12.994615422+00:00] lisa/burkeol/34891575:        GroupId = ipadefaultgp(8305)
+[2025-03-26 00:38:12.995781891+00:00] lisa/burkeol/34891575:         UserId = burkeol(122644)
+[2025-03-26 00:38:12.996909501+00:00] lisa/burkeol/34891575:        Account = lisa
+[2025-03-26 00:38:12.997984670+00:00] lisa/burkeol/34891575:      Partition = gpu_a100
+[2025-03-26 00:38:12.999079829+00:00] lisa/burkeol/34891575:            QOS = gpu_all
+[2025-03-26 00:38:13.000134067+00:00] lisa/burkeol/34891575:        JobName = mismatch_plot
+[2025-03-26 00:38:13.001196286+00:00] lisa/burkeol/34891575:     SubmitTime = 2025-03-26T00:06:28
+[2025-03-26 00:38:13.002325945+00:00] lisa/burkeol/34891575:        RunTime = 00:00:13
+[2025-03-26 00:38:13.003382804+00:00] lisa/burkeol/34891575:      TimeLimit = 05:00:00
+[2025-03-26 00:38:13.004406813+00:00] lisa/burkeol/34891575:   EligibleTime = 2025-03-26T00:06:28
+[2025-03-26 00:38:13.005410151+00:00] lisa/burkeol/34891575:      StartTime = 2025-03-26T00:06:29
+[2025-03-26 00:38:13.006401509+00:00] lisa/burkeol/34891575:        EndTime = 2025-03-26T05:06:29
+[2025-03-26 00:38:13.007471008+00:00] lisa/burkeol/34891575:       ExitCode = 0:0
+[2025-03-26 00:38:13.008547977+00:00] lisa/burkeol/34891575:       NodeList = trexgpu01
+[2025-03-26 00:38:13.009648466+00:00] lisa/burkeol/34891575:      BatchHost = trexgpu01
+[2025-03-26 00:38:13.010829255+00:00] lisa/burkeol/34891575:           TRES = JobId=34891575 JobName=mismatch_plot UserId=burkeol(122644) GroupId=ipadefaultgp(8305) MCS_label=N/A Priority=114601 Nice=0 Account=lisa QOS=gpu_all JobState=RUNNING Reason=Prolog Dependency=(null) Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0 RunTime=00:00:13 TimeLimit=05:00:00 TimeMin=N/A SubmitTime=2025-03-26T00:06:28 EligibleTime=2025-03-26T00:06:28 AccrueTime=2025-03-26T00:06:28 StartTime=2025-03-26T00:06:29 EndTime=2025-03-26T05:06:29 Deadline=N/A PreemptEligibleTime=2025-03-26T00:06:29 PreemptTime=None SuspendTime=None SecsPreSuspend=0 LastSchedEval=2025-03-26T00:06:29 Scheduler=Main Partition=gpu_a100 AllocNode:Sid=trexvisu09:3719024 ReqNodeList=(null) ExcNodeList=(null) NodeList=trexgpu01 BatchHost=trexgpu01 NumNodes=1 NumCPUs=10 NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:* ReqTRES=cpu=1,mem=100G,node=1,billing=1,gres/gpu=1 AllocTRES=cpu=10,mem=100G,node=1,billing=10,gres/gpu=1 Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=* MinCPUsNode=1 MinMemoryNode=100G MinTmpDiskNode=0 Features=(null) DelayBoot=00:00:00 OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null) Command=/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/submit_job.sh WorkDir=/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub StdErr=/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/error_logs/error_34891575.err StdIn=/dev/null StdOut=/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/output_logs/output_34891575.out Power= CpusPerTres=gres/gpu:10 TresPerNode=gres/gpu:1
+[2025-03-26 00:38:13.011970725+00:00] lisa/burkeol/34891575:        Command = /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/submit_job.sh
+[2025-03-26 00:38:13.013055294+00:00] lisa/burkeol/34891575:        WorkDir = /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub
+[2025-03-26 00:38:13.014190823+00:00] lisa/burkeol/34891575:         StdErr = /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/error_logs/error_34891575.err
+[2025-03-26 00:38:13.015207512+00:00] lisa/burkeol/34891575:         StdOut = /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/output_logs/output_34891575.out
+
+#########################################
+#        EVIDEN - CNES                  #
+#        Job Accounting                 #
+#########################################
+Cluster              : trex
+JobIDRaw             : 34891575
+JobID                : 34891575
+JobName              : mismatch_plot
+Account              : lisa
+User                 : burkeol(122644), ipadefaultgp(8305)
+Partition            : gpu_a100
+QOS                  : gpu_all
+Nodelist             : trexgpu01 (1)
+State                : COMPLETED  (Exitcode=0:0, DerivedExitCode=0:0, Restarts=0)
+Submit date          : 2025-03-26T00:06:28
+Start time           : 2025-03-26T00:06:29
+End time             : 2025-03-26T00:38:09
+Elapsed time         : 00:31:40  (Timelimit=05:00:00, Suspended=00:00:00)
+TEI                  : 5:16:40
+Command              : /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/submit_job.sh
+StdOut               : /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/output_logs/output_34891575.out
+StdErr               : /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/error_logs/error_34891575.err
+
+STEP(s) : 2
+--------- 
+   StepID  | JobName      State       Exit   Start               End                 Elapsed   TotalCPU   CPUTime    ConsumedEnergy MaxDiskRead MaxDiskWrite     MaxRSS MaxRSSTask MaxRSSNode NNodes UserCPU    NodeList
+   ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+   batch   | batch        COMPLETED   0:0    2025-03-26T00:06:29 2025-03-26T00:38:09 00:31:40  31:22.284  05:16:40              0.0   10179.01M        0.03M   3900704K          0  trexgpu01      1 31:09.911  trexgpu01
+   extern  | extern       COMPLETED   0:0    2025-03-26T00:06:29 2025-03-26T00:38:09 00:31:40  00:00:00   05:16:40              0.0       0.00M        0.00M       888K          0  trexgpu01      1 00:00:00   trexgpu01
+
