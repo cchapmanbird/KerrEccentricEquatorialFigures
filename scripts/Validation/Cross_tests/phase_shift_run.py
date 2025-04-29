@@ -22,7 +22,7 @@ traj_few = EMRIInspiral(func = SchwarzEccFlux, integrate_constants_of_motion=Fal
 traj_Kerr_ecc = EMRIInspiral(func= KerrEccEqFlux, integrate_constants_of_motion=False) 
 
 
-output_file = "final_phase_across_models_full_newmass.json"
+output_file = "./Data/final_phase_across_models_full_newmass_dense.json"
 if os.path.exists(output_file):
     os.remove(output_file)
     print("old file removed")
@@ -54,8 +54,9 @@ print("mass in second from Zach: ", Mt2st_BHPWave,'\n', "mass in second from FEW
 
 
 ##### loading saved data form the old FEW Kerr circular version
-path_amp_plots = os.getcwd() + '/'#"/home/hkhalvati/Downloads/KerrEccentricEquatorialFigures/scripts/Results/Cross_tests/"
-traj_KerrCirc_result = np.loadtxt(path_amp_plots + "Traj_KerrCirc_full_newmass.txt")
+path_traj_data = "/mnt/beegfs/hkhalvati/data_for_KerrEcc_comparison/" #"/home/hkhalvati/Downloads/KerrEccentricEquatorialFigures/scripts/Results/Cross_tests/"
+
+traj_KerrCirc_result = np.loadtxt(path_traj_data + "Traj_KerrCirc_full_newmass_dense.txt")
 
 
 a_arr = np.unique(traj_KerrCirc_result[:,0])
