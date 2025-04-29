@@ -197,7 +197,8 @@ if __name__ == "__main__":
         logging.info(f"Generating {args.nsamples} parameters with seed {args.seed}.")
         from timing_utils import gen_parameters
 
-        parameter_list = np.loadtxt(f"timing_parameter_list_seed{args.seed}_nsamples{args.nsamples}.txt", delimiter=",", dtype=float)
+        parameter_list = np.loadtxt(f"timing_parameter_list_seed314159_nsamples10000.txt", delimiter=",", dtype=float)
+        parameter_list = parameter_list[:args.nsamples]
         # check if list par exists
         # parameter_list, flist = gen_parameters(
         #     args.nsamples, duration, seed_in=args.seed, verbose=args.verbose
@@ -245,7 +246,7 @@ if __name__ == "__main__":
     waveform_kwargs_base = {
         "T": duration,
         "dt": 5.0,
-        "eps": 1e-2,
+        "mode_selection_threshold": 1e-2,
     }
 
     if args.delta_t:
