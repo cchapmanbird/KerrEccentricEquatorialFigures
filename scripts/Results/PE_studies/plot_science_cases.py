@@ -44,7 +44,7 @@ custom_rcParams = {
         'legend.fontsize': 20,
         'legend.scatterpoints' : 3,
         #'lines.color': 'k',
-        'lines.linewidth': 2,
+        'lines.linewidth': 1.5,
         'patch.linewidth': 1,
         'hatch.linewidth': 1,
         'grid.linestyle': 'dashed',
@@ -62,21 +62,21 @@ from few.utils.constants import YRSID_SI
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
 
 LIGHT_IMRI_PARAMS = dict(
-    M = 1e5, 
-    mu = 1e3, 
-    a = 0.95, 
-    p0 = 74.94184, 
-    e0 = 0.85, 
-    x_I0 = 1.0,
-    dist = 2.0, 
-    qS = 0.5,
-    phiS = 1.2,
-    qK = 0.8,
-    phiK = 0.2, 
-    Phi_phi0 = 5.0,
-    Phi_theta0 = 0.0,
-    Phi_r0 = 4.5,
-    dt = 1.0,
+    M=1e5, 
+    mu=1e3, 
+    a=0.95, 
+    p0=74.94184, 
+    e0=0.85, 
+    x_I0=1.0,
+    dist=2.0, 
+    qS=0.8,
+    phiS=2.2,
+    qK=1.6,
+    phiK=1.2,
+    Phi_phi0=5.0,
+    Phi_theta0=0.0,
+    Phi_r0=4.5,
+    dt=2.0,
     label = "Light_imri",
     )
 
@@ -88,10 +88,10 @@ HEAVY_IMRI_PARAMS = dict(
     e0=0.85,
     x_I0=1.0,
     dist=7.25,
-    qS=0.5,
-    phiS=1.2,
-    qK=0.8,
-    phiK=0.2,
+    qS=0.8,
+    phiS=2.2,
+    qK=1.6,
+    phiK=1.2,
     Phi_phi0=0.0,
     Phi_theta0=0.0,
     Phi_r0=6.0,
@@ -107,11 +107,11 @@ STRONG_FIELD_EMRI_PARAMS = dict(
     e0=0.425,
     x_I0=1.0,
     dist=5.465,
-    qS=0.5,
-    phiS=1.2,
-    qK=0.8,
-    phiK=0.2,
-    Phi_phi0=1.0,
+    qS=0.8,
+    phiS=2.2,
+    qK=1.6,
+    phiK=1.2,
+    Phi_phi0=2.0,
     Phi_theta0=0.0,
     Phi_r0=3.0,
     dt=5.0,
@@ -126,34 +126,34 @@ PROGRADE_EMRI_PARAMS = dict(
     e0=0.730,
     x_I0=1.0,
     dist=7.660,
-    qS=0.5,
-    phiS=1.2,
-    qK=0.8,
-    phiK=0.2,
-    Phi_phi0=1.0,
+    qS=0.8,
+    phiS=2.2,
+    qK=1.6,
+    phiK=1.2,
+    Phi_phi0=2.0,
     Phi_theta0=0.0,
     Phi_r0=3.0,
     dt=5.0,
-    label = "Prograde emri"
+    label = "Prograde_emri"
 )
 
 RETROGRADE_EMRI_PARAMS = dict(
     M=1e5,
     mu=1e1,
     a=0.5,
-    p0=7.7275,
+    p0=26.19,
     e0=0.8,
     x_I0=-1.0,
-    dist=1,
-    qS=0.5,
-    phiS=1.2,
-    qK=0.8,
-    phiK=0.2,
-    Phi_phi0=1.0,
+    dist=1.5667,
+    qS=0.8,
+    phiS=2.2,
+    qK=1.6,
+    phiK=1.2,
+    Phi_phi0=2.0,
     Phi_theta0=0.0,
     Phi_r0=3.0,
-    dt=5.0,
-    label = "Retrograde emri"
+    dt=2.0,
+    label = "Retrograde_emri"
 )
 
 
@@ -240,7 +240,7 @@ def produce_plot(logger,
     logger.info(f"plotting the last {-1* RIGHT_START_SECONDS} seconds of the waveform")
 
     backend = "gpu" if use_gpu else "cpu"
-    fig, axes = plt.subplots(nrows=4, ncols=2, figsize=figsize, sharex='col', sharey='row')
+    fig, axes = plt.subplots(nrows=5, ncols=2, figsize=figsize, sharex='col', sharey='row')
     
     Kerr_waveform = GenerateEMRIWaveform(
         "FastKerrEccentricEquatorialFlux",
@@ -252,7 +252,7 @@ def produce_plot(logger,
 
     Tobs = 2.0 # 2.0 years
 
-    def load_waveform(source_dict):
+    def load_waveform(source_dict, use_cached=True):
         #save the waveform to a file to edit it also offline on the laptop
         # Get the parameters from the dictionary
         label, params, dt = get_params_from_dict(source_dict)
@@ -260,7 +260,7 @@ def produce_plot(logger,
         filename = 'waveform_files/{}.h5'.format(label)
         
         # Check if the file exists
-        if os.path.exists(filename):
+        if os.path.exists(filename) and use_cached:
             logger.info(f"Loading waveform from file")
             with h5py.File(filename, 'r') as f:
                 # Load the waveform data
@@ -270,7 +270,7 @@ def produce_plot(logger,
         else:
             # Generate the waveform
             logger.info(f"Generating waveform")
-            wf = Kerr_waveform(*params, dt=dt, T=Tobs)
+            wf = Kerr_waveform(*params, dt=dt, T=Tobs, mode_selection_threshold=0.0)
 
             if hasattr(wf, "get"): # convert from cupy to numpy
                 wf = wf.get()
@@ -300,7 +300,7 @@ def produce_plot(logger,
         #breakpoint()
         logger.info(f"Plotting {source_dict['label']}")
 
-        t, hp, hc = load_waveform(source_dict)
+        t, hp, hc = load_waveform(source_dict, use_cached=False)
 
         left_end = np.ceil(LEFT_END_SECONDS / source_dict['dt'])
         right_start = np.floor(RIGHT_START_SECONDS / source_dict['dt'])
@@ -317,6 +317,16 @@ def produce_plot(logger,
 
         if spline:
             spline_dt = 0.1
+
+            # Spline the waveform using cubic interpolation and a smaller dt
+            t_start_spline = np.arange(t_start[0], t_start[-1], spline_dt)
+            hp_start_spline = CubicSplineInterpolant(t_start, hp_start)(t_start_spline)
+            hc_start_spline = CubicSplineInterpolant(t_start, hc_start)(t_start_spline)
+            t_start = t_start_spline
+            hp_start = hp_start_spline.get() if hasattr(hp_start_spline, "get") else hp_start_spline
+            hc_start = hc_start_spline.get() if hasattr(hc_start_spline, "get") else hc_start_spline
+            
+            # Spline the waveform using cubic interpolation and a smaller dt
             t_end_spline = np.arange(t_end[0], t_end[-1], spline_dt)
             hp_end_spline = CubicSplineInterpolant(t_end, hp_end)(t_end_spline)
             hc_end_spline = CubicSplineInterpolant(t_end, hc_end)(t_end_spline)
@@ -339,6 +349,10 @@ def produce_plot(logger,
         #set the y-axis label
         axis_label = process_label(source_dict['label'])
         axs[0].set_ylabel(axis_label)
+        
+        #enforce y axis to be symmetric around 0
+        ymax = max(np.max(np.abs(hp_start)), np.max(np.abs(hp_end)))
+        axs[0].set_ylim(-1.2 * ymax, 1.2 * ymax)
 
     
     def fill_figure(axs, all_dicts):
@@ -348,12 +362,12 @@ def produce_plot(logger,
         
         #set the legend for the first row
         # if plot_hx: 
-        axs[0,0].legend(loc='upper right')
+        axs[0,0].legend(loc='upper right', handlelength=1.5)
         # Set the x-axis label
         axs[-1,0].set_xlabel("Time [s]")
         axs[-1,1].set_xlabel("Time [s]")
 
-    all_dicts = [LIGHT_IMRI_PARAMS, HEAVY_IMRI_PARAMS, STRONG_FIELD_EMRI_PARAMS, PROGRADE_EMRI_PARAMS]#[::-1]
+    all_dicts = [LIGHT_IMRI_PARAMS, HEAVY_IMRI_PARAMS, STRONG_FIELD_EMRI_PARAMS, PROGRADE_EMRI_PARAMS, RETROGRADE_EMRI_PARAMS]#[::-1]
     fill_figure(axes, all_dicts)
 
     #remove x ticks from the top row
@@ -377,7 +391,7 @@ if __name__ == "__main__":
     use_gpu = True
     inspiral_kwargs = {'flux_output_convention':'ELQ'}
     savename = 'waveform_plots/time_domain/time_snapshots.pdf'
-    figsize = (24, 16)
+    figsize = (18, 15)
     plot_hx = False
     spline = True
 
