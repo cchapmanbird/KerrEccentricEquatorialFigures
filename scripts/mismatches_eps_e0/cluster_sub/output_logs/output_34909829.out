@@ -1,0 +1,57 @@
+envs_dirs : /work/scratch/env/burkeol/.conda/envs
+pkgs_dirs : /work/scratch/data/burkeol/.conda/pkgs
+envs_dirs : /work/scratch/env/burkeol/.conda/envs
+pkgs_dirs : /work/scratch/data/burkeol/.conda/pkgs
+[2025-03-26 12:00:29.875870667+00:00] lisa/burkeol/34909829:  Account (env) = lisa
+[2025-03-26 12:00:29.876845471+00:00] lisa/burkeol/34909829:     User (env) = burkeol
+[2025-03-26 12:00:29.877713834+00:00] lisa/burkeol/34909829:        GroupId = ipadefaultgp(8305)
+[2025-03-26 12:00:29.878550927+00:00] lisa/burkeol/34909829:         UserId = burkeol(122644)
+[2025-03-26 12:00:29.879506092+00:00] lisa/burkeol/34909829:        Account = lisa
+[2025-03-26 12:00:29.880542057+00:00] lisa/burkeol/34909829:      Partition = gpu_a100
+[2025-03-26 12:00:29.881549113+00:00] lisa/burkeol/34909829:            QOS = gpu_all
+[2025-03-26 12:00:29.882536877+00:00] lisa/burkeol/34909829:        JobName = mismatch_plot
+[2025-03-26 12:00:29.883455071+00:00] lisa/burkeol/34909829:     SubmitTime = 2025-03-26T11:59:48
+[2025-03-26 12:00:29.884415556+00:00] lisa/burkeol/34909829:        RunTime = 00:00:10
+[2025-03-26 12:00:29.885398871+00:00] lisa/burkeol/34909829:      TimeLimit = 05:00:00
+[2025-03-26 12:00:29.886344365+00:00] lisa/burkeol/34909829:   EligibleTime = 2025-03-26T11:59:48
+[2025-03-26 12:00:29.887257539+00:00] lisa/burkeol/34909829:      StartTime = 2025-03-26T11:59:49
+[2025-03-26 12:00:29.888168902+00:00] lisa/burkeol/34909829:        EndTime = 2025-03-26T16:59:49
+[2025-03-26 12:00:29.889034815+00:00] lisa/burkeol/34909829:       ExitCode = 0:0
+[2025-03-26 12:00:29.889975580+00:00] lisa/burkeol/34909829:       NodeList = trexgpu04
+[2025-03-26 12:00:29.890932434+00:00] lisa/burkeol/34909829:      BatchHost = trexgpu04
+[2025-03-26 12:00:29.891972310+00:00] lisa/burkeol/34909829:           TRES = JobId=34909829 JobName=mismatch_plot UserId=burkeol(122644) GroupId=ipadefaultgp(8305) MCS_label=N/A Priority=114568 Nice=0 Account=lisa QOS=gpu_all JobState=RUNNING Reason=Prolog Dependency=(null) Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0 RunTime=00:00:10 TimeLimit=05:00:00 TimeMin=N/A SubmitTime=2025-03-26T11:59:48 EligibleTime=2025-03-26T11:59:48 AccrueTime=2025-03-26T11:59:48 StartTime=2025-03-26T11:59:49 EndTime=2025-03-26T16:59:49 Deadline=N/A PreemptEligibleTime=2025-03-26T11:59:49 PreemptTime=None SuspendTime=None SecsPreSuspend=0 LastSchedEval=2025-03-26T11:59:49 Scheduler=Main Partition=gpu_a100 AllocNode:Sid=trexgpu03:389023 ReqNodeList=(null) ExcNodeList=(null) NodeList=trexgpu04 BatchHost=trexgpu04 NumNodes=1 NumCPUs=10 NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:* ReqTRES=cpu=1,mem=100G,node=1,billing=1,gres/gpu=1 AllocTRES=cpu=10,mem=100G,node=1,billing=10,gres/gpu=1 Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=* MinCPUsNode=1 MinMemoryNode=100G MinTmpDiskNode=0 Features=(null) DelayBoot=00:00:00 OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null) Command=/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/submit_job.sh WorkDir=/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub StdErr=/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/error_logs/error_34909829.err StdIn=/dev/null StdOut=/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/output_logs/output_34909829.out Power= CpusPerTres=gres/gpu:10 TresPerNode=gres/gpu:1
+[2025-03-26 12:00:29.892952065+00:00] lisa/burkeol/34909829:        Command = /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/submit_job.sh
+[2025-03-26 12:00:29.893901959+00:00] lisa/burkeol/34909829:        WorkDir = /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub
+[2025-03-26 12:00:29.894806642+00:00] lisa/burkeol/34909829:         StdErr = /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/error_logs/error_34909829.err
+[2025-03-26 12:00:29.895721966+00:00] lisa/burkeol/34909829:         StdOut = /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/output_logs/output_34909829.out
+
+#########################################
+#        EVIDEN - CNES                  #
+#        Job Accounting                 #
+#########################################
+Cluster              : trex
+JobIDRaw             : 34909829
+JobID                : 34909829
+JobName              : mismatch_plot
+Account              : lisa
+User                 : burkeol(122644), ipadefaultgp(8305)
+Partition            : gpu_a100
+QOS                  : gpu_all
+Nodelist             : trexgpu04 (1)
+State                : CANCELLED  (Exitcode=0:0, DerivedExitCode=0:0, Restarts=0)
+Submit date          : 2025-03-26T11:59:48
+Start time           : 2025-03-26T11:59:49
+End time             : 2025-03-26T12:00:24
+Elapsed time         : 00:00:35  (Timelimit=05:00:00, Suspended=00:00:00)
+TEI                  : 0:05:50
+Command              : /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/submit_job.sh
+StdOut               : /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/output_logs/output_34909829.out
+StdErr               : /home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/mismatches_eps_e0/cluster_sub/error_logs/error_34909829.err
+
+STEP(s) : 2
+--------- 
+   StepID  | JobName      State       Exit   Start               End                 Elapsed   TotalCPU   CPUTime    ConsumedEnergy MaxDiskRead MaxDiskWrite     MaxRSS MaxRSSTask MaxRSSNode NNodes UserCPU    NodeList
+   ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+   batch   | batch        CANCELLED   0:15   2025-03-26T11:59:49 2025-03-26T12:00:26 00:00:37  00:01.667  00:06:10              0.0      83.41M        0.03M    882432K          0  trexgpu04      1 00:01.313  trexgpu04
+   extern  | extern       COMPLETED   0:0    2025-03-26T11:59:49 2025-03-26T12:00:24 00:00:35  00:00:00   00:05:50              0.0       0.00M        0.00M       836K          0  trexgpu04      1 00:00:00   trexgpu04
+
