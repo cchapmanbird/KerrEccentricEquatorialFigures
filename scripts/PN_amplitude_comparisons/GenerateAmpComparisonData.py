@@ -94,7 +94,7 @@ PNp1l4m2n1 = np.loadtxt('5PN_e10_mathematica/p1l4m2n1.csv', delimiter=',')
 PNp1l5m2n1 = np.loadtxt('5PN_e10_mathematica/p1l5m2n1.csv', delimiter=',')
 PNp1l6m2n1 = np.loadtxt('5PN_e10_mathematica/p1l6m2n1.csv', delimiter=',')
 
-from few.utils.utility import get_fundamental_frequencies
+from few.utils.geodesic import get_fundamental_frequencies
 
 #l=2,m=2,n=0 spherical mode:
 PNp1l2m2n0spherical=np.zeros(np.shape(PNp1l2m2n0));
@@ -359,7 +359,7 @@ PNp3l4m2n1 = np.loadtxt('5PN_e10_mathematica/p3l4m2n1.csv', delimiter=',')
 PNp3l5m2n1 = np.loadtxt('5PN_e10_mathematica/p3l5m2n1.csv', delimiter=',')
 PNp3l6m2n1 = np.loadtxt('5PN_e10_mathematica/p3l6m2n1.csv', delimiter=',')
 
-from few.utils.utility import get_separatrix
+from few.utils.geodesic import get_separatrix
 
 #l=2,m=2,n=0 spherical mode:
 PNp3l2m2n0spherical=np.zeros(np.shape(PNp3l2m2n0));
