@@ -8,10 +8,7 @@ import matplotlib.pyplot as plt
 
 from fastlisaresponse import ResponseWrapper             # Response
 
-# from lisatools.utils.utility import AET
-# from lisatools.detector import scirdv1
 from lisatools.detector import EqualArmlengthOrbits
-# from lisatools.sensitivity import AE1SensitivityMatrix
 
 # Cosmology stuff
 import astropy.units as u
@@ -122,7 +119,7 @@ def llike(params):
 
     waveform_prop = EMRI_TDI_Model(M_val, mu_val, a_val, p0_val, e0_val, 
                                   x_I0_val, D_val, qS_val, phiS_val, qK_val, phiK_val,
-                                    Phi_phi0_val, Phi_theta0_val, Phi_r0_val, mode_selection_threshold = 1e-2)  # EMRI waveform across A, E and T.
+                                    Phi_phi0_val, Phi_theta0_val, Phi_r0_val, mode_selection_threshold = 1e-3)  # EMRI waveform across A, E and T.
 
     # Taper and then zero pad. 
     EMRI_AET_w_pad_prop = [zero_pad(waveform_prop[i]) for i in range(N_channels)]
@@ -290,7 +287,7 @@ data_f_AET = Kerr_TDI_fft + 0*noise_f_AET   # define the data
 
 ##===========================MCMC Settings============================
 
-iterations = 20000  # The number of steps to run of each walker
+iterations = 30000  # The number of steps to run of each walker
 burnin = 0 # I always set burnin when I analyse my samples
 nwalkers = 50  #50 #members of the ensemble, like number of chains
 
@@ -300,7 +297,8 @@ ntemps = 1             # Number of temperatures used for parallel tempering sche
 
 tempering_kwargs=dict(ntemps=ntemps)  # Sampler requires the number of temperatures as a dictionary
 
-d = 1.0 # A parameter that can be used to dictate how close we want to start to the true parameters
+d = 0.1 # A parameter that can be used to dictate how close we want to start to the true parameters
+# d = 0.1 # A parameter that can be used to dictate how close we want to start to the true parameters
 # Useful check: If d = 0 and noise_f = 0, llike(*params) = 0.0, exactly!!
 
 # We start the sampler exceptionally close to the true parameters and let it run. This is reasonable 
@@ -385,7 +383,22 @@ else:
 
 os.chdir('/work/scratch/data/burkeol/kerr_few_paper/paper_runs/MCMC/')
 # Paper run -- EMRI
-fp = "MCMC_samps_M_1e6_mu_10_a_0p998_e0_0p73_p0_7p7275_e0_0p73_pro_SNR_50_dt_5_T_2_eps_0p0_recov_eps_1e-2_dt_5_T_2_TDI2_w_background_equal_arms.h5"
+# Case 1 in table
+# fp = "MCMC_samps_M_1e6_mu_10_a_0p998_e0_0p73_p0_7p7275_e0_0p73_pro_SNR_50_dt_5_T_2_eps_0p0_recov_eps_1e-2_dt_5_T_2_TDI2_w_background_equal_arms.h5"
+# Case 3 in table
+# fp = "MCMC_samps_M_1e7_mu_1e5_a_0p95_e0_0p85_p0_23p425_pro_SNR_500_eps_0p0_recov_eps_1e-5_dt_5_T_2_TDI2_w_background_equal_arms.h5"
+# fp = "MCMC_samps_M_1e7_mu_1e5_a_0p95_e0_0p85_p0_23p425_pro_SNR_500_eps_0p0_recov_eps_1e-2_dt_5_T_2_TDI2_w_background_equal_arms.h5"
+# fp = "MCMC_samps_M_1e7_mu_1e5_a_0p95_e0_0p85_p0_23p425_pro_SNR_500_eps_0p0_recov_eps_1e-3_dt_5_T_2_TDI2_w_background_equal_arms.h5"
+# Case 5 in table - retrograde
+# fp = "MCMC_samps_M_1e5_mu_10_a_0p5_p0_26p19_e0_0p8_ret_SNR_30_eps_0p0_recov_eps_1e-5_dt_5_T_2_TDI2_w_background_equal_arms.h5"
+# fp = "MCMC_samps_M_1e5_mu_10_a_0p5_p0_26p19_e0_0p8_ret_SNR_30_eps_0p0_recov_eps_1e-2_dt_5_T_2_TDI2_w_background_equal_arms.h5"
+
+# Case 2 in table - serious extreme mass-ratio
+# fp = "MCMC_samps_M_1e7_mu_10_a_0p998_p0_2p12_e0_0p425_pro_SNR_30_eps_0p0_recov_eps_1e-5_dt_10_T_2_TDI2_w_background_equal_arms.h5"
+# fp = "MCMC_samps_M_1e7_mu_10_a_0p998_p0_2p12_e0_0p425_pro_SNR_30_eps_0p0_recov_eps_1e-2_dt_10_T_2_TDI2_w_background_equal_arms.h5"
+# Case 4 in table - light IMRI
+# fp = "MCMC_samps_M_1e5_mu_1e3_a_0p998_p0_74p94184_e0_0p85_pro_SNR_200_eps_0p0_recov_eps_1e-5_dt_2_T_2_TDI2_w_background_equal_arms.h5"
+fp = "MCMC_samps_M_1e5_mu_1e3_a_0p998_p0_74p94184_e0_0p85_pro_SNR_200_eps_0p0_recov_eps_1e-3_dt_2_T_2_TDI2_w_background_equal_arms.h5"
 backend = HDFBackend(fp)
 
 ensemble = EnsembleSampler(
