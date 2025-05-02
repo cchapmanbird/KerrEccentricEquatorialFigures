@@ -17,7 +17,7 @@ plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["Computer Modern"]
 
 # %%
-fname = 'timing_2.0yr.json'
+fname = 'new_timing_4.0yr.json'
 timing_data = json.load(open(fname, 'r'))
 
 # %%
@@ -28,7 +28,7 @@ def cast_results_to_dataframe(input_data):
     key_list.append('duration')
     key_list.append('iterations')
     key_list.append('dt')
-    key_list.append('eps')
+    key_list.append('mode_selection_threshold')
     key_list.append('fd_timing')
     key_list.append('td_timing')
     key_list.append('overlap')
@@ -40,7 +40,7 @@ def cast_results_to_dataframe(input_data):
         for data in single['timing_results']:
             temp = _output_list.copy()
             temp.append(data['dt'])
-            temp.append(data['eps'])
+            temp.append(data['mode_selection_threshold'])
             temp.append(data['fd_timing'])
             temp.append(data['td_timing'])
             temp.append(data['overlap'])
@@ -50,12 +50,12 @@ def cast_results_to_dataframe(input_data):
 
 # %%
 def corner_plot(dataframe, minmax=None, use_td=True, plot_type='timing', eps_value=1e-2, dt_value=10.0):
-    eps_range = np.unique(dataframe['eps'])
+    eps_range = np.unique(dataframe['mode_selection_threshold'])
     dt_range = np.unique(dataframe['dt'])
     assert eps_value in eps_range
     assert dt_value in dt_range
 
-    data_given_eps = dataframe[(dataframe['eps'] == eps_value)&(dataframe['dt'] == dt_value)]
+    data_given_eps = dataframe[(dataframe['mode_selection_threshold'] == eps_value)&(dataframe['dt'] == dt_value)]
     # obtain keys from dataframe
     params = list(data_given_eps.keys())
 
@@ -129,8 +129,8 @@ fig, ax = plt.subplots(1, 1, figsize=(7, 5))
 dt = 5.0
 shift_factor = 0.9  # Factor to slightly shift the bins for each histogram
 for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange', 'tab:green'])):
-    data_td = data_df[(data_df['eps'] == eps_val) & (data_df['dt'] == dt)]['td_timing']
-    data_fd = data_df[(data_df['eps'] == eps_val) & (data_df['dt'] == dt)]['fd_timing']
+    data_td = data_df[(data_df['mode_selection_threshold'] == eps_val) & (data_df['dt'] == dt)]['td_timing']
+    data_fd = data_df[(data_df['mode_selection_threshold'] == eps_val) & (data_df['dt'] == dt)]['fd_timing']
     eps_val_log10 = int(np.log10(eps_val))
     
     # Shift the bins slightly for each histogram
@@ -153,7 +153,7 @@ fig, ax = plt.subplots(1, 1, figsize=(7, 5))
 dt = 5.0
 shift_factor = 0.9  # Factor to slightly shift the bins for each histogram
 for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange', 'tab:green'])):
-    data_td = np.abs(1-data_df[(data_df['eps'] == eps_val) & (data_df['dt'] == dt)]['overlap'])
+    data_td = np.abs(1-data_df[(data_df['mode_selection_threshold'] == eps_val) & (data_df['dt'] == dt)]['overlap'])
     eps_val_log10 = int(np.log10(eps_val))
     
     # Shift the bins slightly for each histogram
