@@ -17,7 +17,7 @@ plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["Computer Modern"]
 
 # %%
-fname = 'new_timing_4.0yr.json'
+fname = 'new_timing_2.0yr.json'
 timing_data = json.load(open(fname, 'r'))
 
 # %%
@@ -124,6 +124,7 @@ data_df, param_names = cast_results_to_dataframe(timing_data)
 _min_fd, _max_fd = data_df['fd_timing'].min(), data_df['fd_timing'].max()
 _min_td, _max_td = data_df['td_timing'].min(), data_df['td_timing'].max()
 _min, _max = min([_min_fd, _min_td]), max([_max_fd, _max_td])
+# _max = 1.0
 
 fig, ax = plt.subplots(1, 1, figsize=(7, 5))
 dt = 5.0
@@ -137,11 +138,11 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange',
     fact = np.random.uniform(-0.01, 0.01) 
     lb = np.logspace(np.log10(_min*(1-fact)), np.log10(_max*(1+fact)), 100)
     
-    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $\epsilon = 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
-    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $\epsilon = 10^{{{eps_val_log10}}}$", color=pc)
+    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $k = 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
+    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $k = 10^{{{eps_val_log10}}}$", color=pc)
     ax.set_xscale('log')
     ax.set_xlabel('Speed [s]', fontsize=label_fontsize)
-    ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
+    # ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
     ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
     ax.legend(fontsize=label_fontsize)
 plt.savefig(fname[:-5] + '_timing_dt_5.png', dpi=300)
@@ -159,24 +160,75 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange',
     # Shift the bins slightly for each histogram
     lb = np.logspace(np.log10(_min), np.log10(_max), 100)
     
-    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $\epsilon = 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
-    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $\epsilon = 10^{{{eps_val_log10}}}$", color=pc)
+    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $k = 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
+    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $k = 10^{{{eps_val_log10}}}$", color=pc)
     ax.set_xscale('log')
     ax.set_xlabel('Mismatch', fontsize=label_fontsize)
-    ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
+    # ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
     ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
     ax.legend(fontsize=label_fontsize)
 plt.savefig(fname[:-5] + '_overlap_dt_5.png', dpi=300)
 
+
+
+# Overlap vs Mass
+_min, _max = np.abs(1-data_df['overlap']).min(), np.abs(1-data_df['overlap']).max()
+
+fig, ax = plt.subplots(1, 1, figsize=(7, 5))
+dt = 5.0
+shift_factor = 0.9  # Factor to slightly shift the bins for each histogram
+for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange', 'tab:green'])):
+    data_td = np.abs(1-data_df[(data_df['mode_selection_threshold'] == eps_val) & (data_df['dt'] == dt)]['overlap'])
+    
+    mass_1 = data_df[(data_df['mode_selection_threshold'] == eps_val) & (data_df['dt'] == dt)]['mass_1']
+    eps_val_log10 = int(np.log10(eps_val))
+    ax.plot(mass_1, data_td, '.')
+    # ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $k = 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
+    # ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $k = 10^{{{eps_val_log10}}}$", color=pc)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_ylabel('Mismatch', fontsize=label_fontsize)
+    ax.set_xlabel(r"$M_1$ [M$_\odot$]", fontsize=label_fontsize)
+    # ax.set_xlabel('Mismatch', fontsize=label_fontsize)
+    # ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
+    ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+    ax.legend(fontsize=label_fontsize)
+plt.savefig(fname[:-5] + '_mismatch_M_dt_5.png', dpi=300)
+
+for variable in ["mass_1", "spin", "e0"]:
+    fig, ax = plt.subplots(1, 1, figsize=(7, 5))
+    dt = 5.0
+    shift_factor = 0.9  # Factor to slightly shift the bins for each histogram
+    for idx, (eps_val, pc) in enumerate(zip([1e-2], ['tab:blue', 'tab:orange', 'tab:green'])):
+        data_td = data_df[(data_df['mode_selection_threshold'] == eps_val) & (data_df['dt'] == dt)]['td_timing']
+        data_fd = data_df[(data_df['mode_selection_threshold'] == eps_val) & (data_df['dt'] == dt)]['fd_timing']
+        mass_1 = data_df[(data_df['mode_selection_threshold'] == eps_val) & (data_df['dt'] == dt)][variable]
+        eps_val_log10 = int(np.log10(eps_val))
+        ax.plot(mass_1, data_td, 'P',alpha=0.1, label='TD speed')
+        ax.plot(mass_1, data_fd, 'X',alpha=0.1, label='FD speed')
+        # ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $k = 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
+        # ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $k = 10^{{{eps_val_log10}}}$", color=pc)
+        
+        if variable == 'mass_1':
+            ax.set_xscale('log')
+        ax.set_yscale('log')
+        ax.set_ylabel('Speed [s]', fontsize=label_fontsize)
+        # ax.set_xlabel(r"$M_1$ [M$_\odot$]", fontsize=label_fontsize)
+        ax.set_xlabel(variable, fontsize=label_fontsize)
+        # ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
+        ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
+        ax.legend(fontsize=label_fontsize)
+    plt.savefig(fname[:-5] + '_timing_' + variable + '_dt_5.png', dpi=300)
+
 # %%
-corner_plot(data_df, eps_value=1e-2, dt_value=5.0)
-plt.savefig(fname[:-5] + '_corner_td.png', dpi=300)
+# corner_plot(data_df, eps_value=1e-5, dt_value=5.0)
+# plt.savefig(fname[:-5] + '_corner_td.png', dpi=300)
 
-corner_plot(data_df, eps_value=1e-2, dt_value=5.0, use_td=False)
-plt.savefig(fname[:-5] + '_corner_fd.png', dpi=300)
+# corner_plot(data_df, eps_value=1e-5, dt_value=5.0, use_td=False)
+# plt.savefig(fname[:-5] + '_corner_fd.png', dpi=300)
 
-corner_plot(data_df, eps_value=1e-2, dt_value=5.0, plot_type='ratio')
-plt.savefig(fname[:-5] + '_corner_ratio.png', dpi=300)
+# corner_plot(data_df, eps_value=1e-5, dt_value=5.0, plot_type='ratio')
+# plt.savefig(fname[:-5] + '_corner_ratio.png', dpi=300)
 
-corner_plot(data_df, eps_value=1e-2, dt_value=5.0, plot_type='overlap')
-plt.savefig(fname[:-5] + '_corner_overlap.png', dpi=300)
+# corner_plot(data_df, eps_value=1e-5, dt_value=5.0, plot_type='overlap')
+# plt.savefig(fname[:-5] + '_corner_overlap.png', dpi=300)
