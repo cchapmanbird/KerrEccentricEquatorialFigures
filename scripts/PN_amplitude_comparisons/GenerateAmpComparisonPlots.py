@@ -70,11 +70,10 @@ def plot_diffs2(array,l,m,n):
     
 
  
-    # Create a figure with four subplots
     fig, axes = plt.subplots(2, 1, figsize=(6,10))
 
     # Plot the pdot rel diff using scatter plot
-    scatter1 = axes[0].scatter(p, e, c=z1, cmap='plasma',rasterized=True)
+    scatter1 = axes[0].scatter(p, e, c=z1, cmap='plasma',rasterized=True, vmin=-5, vmax=0)
     axes[0].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Re}}[\mathcal{{A}}_{{{l}{m}{n}}}]^{{FEW}}/ \mathrm{{Re}}[\mathcal{{A}}_{{{l}{m}{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
     axes[0].set_xlabel(r'Semilatus rectum $(p)$', fontsize=label_fontsize)
     axes[0].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
@@ -83,7 +82,7 @@ def plot_diffs2(array,l,m,n):
     fig.colorbar(scatter1, ax=axes[0])
 
     # Plot the edot rel diff using scatter plot
-    scatter2 = axes[1].scatter(p, e, c=z2, cmap='plasma',rasterized=True)
+    scatter2 = axes[1].scatter(p, e, c=z2, cmap='plasma',rasterized=True, vmin=-5, vmax=0)
     axes[1].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Im}}[\mathcal{{A}}_{{{l}{m}{n}}}]^{{FEW}}/ \mathrm{{Im}}[\mathcal{{A}}_{{{l}{m}{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
     axes[1].set_xlabel(r'Semilatus rectum $(p)$', fontsize=label_fontsize)
     axes[1].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
@@ -120,11 +119,11 @@ def plot_diffs3(array,n):
     
 
  
-    # Create a figure with four subplots
+
     fig, axes = plt.subplots(2, 1, figsize=(6,10))
 
     # Plot the pdot rel diff using scatter plot
-    scatter1 = axes[0].scatter(dp, e, c=z1, cmap='plasma',rasterized=True)
+    scatter1 = axes[0].scatter(dp, e, c=z1, cmap='plasma',rasterized=True, vmin=-5, vmax=0)
     axes[0].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Re}}[\mathcal{{A}}_{{22{n}}}]^{{FEW}}/ \mathrm{{Re}}[\mathcal{{A}}_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
     axes[0].set_xlabel(r'Semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
     axes[0].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
@@ -133,7 +132,7 @@ def plot_diffs3(array,n):
     fig.colorbar(scatter1, ax=axes[0])
 
     # Plot the edot rel diff using scatter plot
-    scatter2 = axes[1].scatter(dp, e, c=z2, cmap='plasma',rasterized=True)
+    scatter2 = axes[1].scatter(dp, e, c=z2, cmap='plasma',rasterized=True, vmin=-5, vmax=0)
     axes[1].set_title(rf'$\log_{{10}} \left(| 1 - \mathrm{{Im}}[\mathcal{{A}}_{{22{n}}}]^{{FEW}}/ \mathrm{{Im}}[\mathcal{{A}}_{{22{n}}}]^{{PN}} | \right)$', fontsize=title_fontsize)
     axes[1].set_xlabel(r'Semilatus rectum $(p-p_{LSO})$', fontsize=label_fontsize)
     axes[1].set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
