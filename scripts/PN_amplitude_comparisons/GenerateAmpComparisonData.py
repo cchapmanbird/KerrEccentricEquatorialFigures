@@ -94,7 +94,7 @@ PNp1l4m2n1 = np.loadtxt('5PN_e10_mathematica/p1l4m2n1.csv', delimiter=',')
 PNp1l5m2n1 = np.loadtxt('5PN_e10_mathematica/p1l5m2n1.csv', delimiter=',')
 PNp1l6m2n1 = np.loadtxt('5PN_e10_mathematica/p1l6m2n1.csv', delimiter=',')
 
-from few.utils.utility import get_fundamental_frequencies
+from few.utils.geodesic import get_fundamental_frequencies
 
 #l=2,m=2,n=0 spherical mode:
 PNp1l2m2n0spherical=np.zeros(np.shape(PNp1l2m2n0));
@@ -156,7 +156,7 @@ def compareamps(dataPN,n):
     
     length=dataPN.shape[0]
 
-    reldiffs= np.zeros((length,8))
+    reldiffs= np.zeros((length,9))
     for i in range(length):
         
         e=dataPN[i][0]
@@ -172,16 +172,19 @@ def compareamps(dataPN,n):
 
         rediff=np.log10(abs(1-(reampfew/reampPN)))
         imdiff=np.log10(abs(1-(imampfew/imampPN)))
+        magdiff = np.log10(np.abs(1 - (reampfew + 1j*imampfew) / (reampPN + 1j*imampPN)))
 
         reldiffs[i][0]=e
         reldiffs[i][1]=a
         reldiffs[i][2]=rediff
         reldiffs[i][3]=imdiff
-        
-        reldiffs[i][4]=reampfew #Store both PN amps and few amps for inspection if need be
-        reldiffs[i][5]=imampfew
-        reldiffs[i][6]=reampPN
-        reldiffs[i][7]=imampPN
+        reldiffs[i][4]=magdiff
+
+        reldiffs[i][5]=reampfew #Store both PN amps and few amps for inspection if need be
+        reldiffs[i][6]=imampfew
+        reldiffs[i][7]=reampPN
+        reldiffs[i][8]=imampPN
+
 
     return reldiffs
 
@@ -302,7 +305,7 @@ def compareamps2(dataPN,l,m,n):
     
     length=dataPN.shape[0]
 
-    reldiffs= np.zeros((length,8))
+    reldiffs= np.zeros((length,9))
     for i in range(length):
 
         p=dataPN[i][0]
@@ -319,16 +322,18 @@ def compareamps2(dataPN,l,m,n):
 
         rediff=np.log10(abs(1-(reampfew/reampPN)))
         imdiff=np.log10(abs(1-(imampfew/imampPN)))
+        magdiff = np.log10(np.abs(1 - (reampfew + 1j*imampfew) / (reampPN + 1j*imampPN)))
 
         reldiffs[i][0]=p
         reldiffs[i][1]=e
         reldiffs[i][2]=rediff
         reldiffs[i][3]=imdiff
-        
-        reldiffs[i][4]=reampfew #Store both PN amps and few amps for inspection if need be
-        reldiffs[i][5]=imampfew
-        reldiffs[i][6]=reampPN
-        reldiffs[i][7]=imampPN
+        reldiffs[i][4]=magdiff
+
+        reldiffs[i][5]=reampfew #Store both PN amps and few amps for inspection if need be
+        reldiffs[i][6]=imampfew
+        reldiffs[i][7]=reampPN
+        reldiffs[i][8]=imampPN
 
     return reldiffs
 
@@ -359,7 +364,7 @@ PNp3l4m2n1 = np.loadtxt('5PN_e10_mathematica/p3l4m2n1.csv', delimiter=',')
 PNp3l5m2n1 = np.loadtxt('5PN_e10_mathematica/p3l5m2n1.csv', delimiter=',')
 PNp3l6m2n1 = np.loadtxt('5PN_e10_mathematica/p3l6m2n1.csv', delimiter=',')
 
-from few.utils.utility import get_separatrix
+from few.utils.geodesic import get_separatrix
 
 #l=2,m=2,n=0 spherical mode:
 PNp3l2m2n0spherical=np.zeros(np.shape(PNp3l2m2n0));
@@ -422,7 +427,7 @@ def compareamps3(dataPN,n):
     
     length=dataPN.shape[0]
 
-    reldiffs= np.zeros((length,8))
+    reldiffs= np.zeros((length,10))
 
 # Attempt to call the amp function and check for exception indicating outside of interpolant range (as getting a value error somewhere, maybe separatrix finder failing?)
     def is_not_allowed_value(p,e,x):
@@ -451,6 +456,7 @@ def compareamps3(dataPN,n):
             reldiffs[i][5]=0
             reldiffs[i][6]=0
             reldiffs[i][7]=0
+            reldiffs[i][8]=0
             
 
         else:
@@ -464,16 +470,19 @@ def compareamps3(dataPN,n):
 
             rediff=np.log10(abs(1-(reampfew/reampPN)))
             imdiff=np.log10(abs(1-(imampfew/imampPN)))
+            magdiff = np.log10(np.abs(1 - (reampfew + 1j*imampfew) / (reampPN + 1j*imampPN)))
 
-            reldiffs[i][0]=dp
+            reldiffs[i][0]=plso+dp
             reldiffs[i][1]=e
             reldiffs[i][2]=rediff
             reldiffs[i][3]=imdiff
+            reldiffs[i][4]=magdiff
         
-            reldiffs[i][4]=reampfew #Store both PN amps and few amps for inspection if need be
-            reldiffs[i][5]=imampfew
-            reldiffs[i][6]=reampPN
-            reldiffs[i][7]=imampPN
+            reldiffs[i][5]=reampfew #Store both PN amps and few amps for inspection if need be
+            reldiffs[i][6]=imampfew
+            reldiffs[i][7]=reampPN
+            reldiffs[i][8]=imampPN
+            reldiffs[i][9]=plso 
 
     #Now filter out the entries outside of the domain of the interpolant by deleting rows where the few amps are zero
     filtered_array = reldiffs[~np.all(reldiffs[:, -6:] == 0, axis=1)]
