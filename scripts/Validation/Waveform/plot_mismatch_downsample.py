@@ -46,12 +46,12 @@ plt.figure(figsize=(3.5,6), dpi=200)
 plt.subplot(2, 1, 1)
 plt.scatter(misms_all[:,4], misms_all[:,3], s=8, c = mism_plot, cmap='plasma', vmin=vmin, vmax=vmax, rasterized=True)
 plt.tick_params(axis='x', labelbottom=False)
-plt.ylabel(r'$p$')
+plt.ylabel(r'$p_0$')
 
 plt.subplot(2, 1, 2)
 sc = plt.scatter(misms_all[:,4], misms_all[:,2], s=8, c = mism_plot, cmap='plasma', vmin=vmin, vmax=vmax, rasterized=True)
-plt.ylabel('$a$')
-plt.xlabel('$e$')
+plt.ylabel(r'$a$')
+plt.xlabel(r'$e_0$')
 
 plt.tight_layout()
 
