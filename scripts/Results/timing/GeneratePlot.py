@@ -17,7 +17,7 @@ plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["Computer Modern"]
 
 # %%
-fname = 'new_timing_2.0yr.json'
+fname = 'new_timing_4.0yr.json'
 timing_data = json.load(open(fname, 'r'))
 
 # %%
@@ -129,7 +129,8 @@ _min, _max = min([_min_fd, _min_td]), max([_max_fd, _max_td])
 fig, ax = plt.subplots(1, 1, figsize=(7, 5))
 dt = 5.0
 shift_factor = 0.9  # Factor to slightly shift the bins for each histogram
-for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange', 'tab:green'])):
+for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['-', '--'])):
+    print(f"eps_val: {eps_val}")
     data_td = data_df[(data_df['mode_selection_threshold'] == eps_val) & (data_df['dt'] == dt)]['td_timing']
     data_fd = data_df[(data_df['mode_selection_threshold'] == eps_val) & (data_df['dt'] == dt)]['fd_timing']
     eps_val_log10 = int(np.log10(eps_val))
@@ -138,8 +139,20 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange',
     fact = np.random.uniform(-0.01, 0.01) 
     lb = np.logspace(np.log10(_min*(1-fact)), np.log10(_max*(1+fact)), 100)
     
-    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $k = 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
-    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $k = 10^{{{eps_val_log10}}}$", color=pc)
+    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $k = 10^{{{eps_val_log10}}}$", linestyle=pc, color="C0")
+    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $k = 10^{{{eps_val_log10}}}$", linestyle=pc, color="C1")
+    print(f"Median TD timing for eps={eps_val}: {np.median(data_td):.4f} s")
+    print(f"Median FD timing for eps={eps_val}: {np.median(data_fd):.4f} s")
+    # Find and print the parameters for the minimum and maximum TD and FD timings
+    min_td_idx = data_td.idxmin()
+    max_td_idx = data_td.idxmax()
+    min_fd_idx = data_fd.idxmin()
+    max_fd_idx = data_fd.idxmax()
+
+    print(f"TD min: {data_td[min_td_idx]:.4f} s, params: {data_df.loc[min_td_idx, param_names[:5]]}")
+    print(f"TD max: {data_td[max_td_idx]:.4f} s, params: {data_df.loc[max_td_idx, param_names[:5]]}")
+    print(f"FD min: {data_fd[min_fd_idx]:.4f} s, params: {data_df.loc[min_fd_idx, param_names[:5]]}")
+    print(f"FD max: {data_fd[max_fd_idx]:.4f} s, params: {data_df.loc[max_fd_idx, param_names[:5]]}")
     ax.set_xscale('log')
     ax.set_xlabel('Speed [s]', fontsize=label_fontsize)
     # ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)

@@ -1,0 +1,17 @@
+# Condor submit file for run_timing.py job submission
+universe = vanilla
+executable = /data/lsperi/KerrEccentricEquatorialFiguresRestructure/scripts/Results/timing/run_timing.py
+arguments = -v -f $(output_file) --generate_parameters --nsamples 10000 --epsilon --duration $(duration) --iterations 1 -l $(log_file)
+
+output = $(output_file).out
+error  = $(output_file).err
+log    = $(output_file).log
+
+request_memory = 32.0GB
+request_disk = 2.0GB
+request_cpus = 2
+notification = Never
+requirements = TARGET.CUDAGlobalMemoryMb>20000
+request_gpus = 1
+
+queue

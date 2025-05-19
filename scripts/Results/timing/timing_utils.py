@@ -176,10 +176,6 @@ def time_full_waveform_generation(
     dt_list = [5.0, 10.0]
     eps_list = [1e-2, 1e-5]
 
-    # run things once to cache, this will sometimes take a few seconds
-    fd_waveform_func(*input_params[0], **waveform_kwargs_base)
-    td_waveform_func(*input_params[0], **waveform_kwargs_base)
-    
     if verbose:
         iterator = tqdm(input_params, total=len(input_params))
     else:
@@ -197,11 +193,15 @@ def time_full_waveform_generation(
 
     for params in iterator:
         internal_param_list = []
+        print(params)
         for dt in dt_list_to_use:
             for eps in eps_list_to_use:
                 wvf_kwargs = waveform_kwargs_base.copy()
                 wvf_kwargs.update({"dt": dt, "mode_selection_threshold": eps})
-
+                # run things once to cache, this will sometimes take a few seconds
+                fd_waveform_func(*input_params[0], **wvf_kwargs)
+                td_waveform_func(*input_params[0], **wvf_kwargs)
+                
                 # Time FD waveform generation
                 fd_start_time = timeit.default_timer()
                 for _ in range(iterations):
@@ -228,6 +228,7 @@ def time_full_waveform_generation(
                 window = xp.asarray(hann(Npoints))
                 window = xp.asarray(tukey(Npoints, 0.005)) # half percent taper
                 frequency = fd_waveform_func.waveform_generator.create_waveform.frequency
+                delta_f = float(frequency[1] - frequency[0])
                 # if you want to include the PSD
                 psd = xp.asarray(Sh_X(frequency.get()))
                 # compare by windowing both the fd and td waveforms
@@ -241,8 +242,8 @@ def time_full_waveform_generation(
                 for fd_wave,fft_td in zip(fd_windowed, fft_td_windowed):
                     # fd_wave = fd_wave[mask]
                     # fft_td = fft_td[mask]
-                    power_fd = (fd_wave.conj() * fd_wave).sum().real 
-                    power_td = (fft_td.conj() * fft_td).sum().real
+                    power_fd = 4 * (fd_wave.conj() * fd_wave / psd).sum().real * delta_f
+                    power_td = 4 * (fft_td.conj() * fft_td / psd).sum().real * delta_f
                     # print("Relative difference in power", abs(power_fd - power_td) / power_fd)
                     overlap += (fd_wave.conj() * fft_td / psd).sum().real / ( (fd_wave.conj() * fd_wave / psd).sum().real * (fft_td.conj() * fft_td / psd).sum().real )**0.5
                 # average
@@ -257,6 +258,8 @@ def time_full_waveform_generation(
                     "fd_timing": fd_time,
                     "td_timing": td_time,
                     "overlap": overlap,
+                    "power_fd": power_fd,
+                    "power_td": power_td,
                 }
 
                 internal_param_list.append(internal_results_dict.copy())

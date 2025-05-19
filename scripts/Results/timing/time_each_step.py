@@ -150,7 +150,7 @@ class TimingBase(
         Phi_r0: float = 0.0,
         dt: float = 10.0,
         T: float = 1.0,
-        eps: float = 1e-5,
+        mode_selection_threshold: float = 1e-5,
         show_progress: bool = False,
         batch_size: int = -1,
         mode_selection: Optional[Union[str, list, np.ndarray]] = None,
@@ -181,7 +181,7 @@ class TimingBase(
                 sampling frequency). Default is 10.0.
             T: Total observation time in years.
                 Default is 1.0.
-            eps: Controls the fractional accuracy during mode
+            mode_selection_threshold: Controls the fractional accuracy during mode
                 filtering. Raising this parameter will remove modes. Lowering
                 this parameter will add modes. Default that gives a good overalp
                 is 1e-5.
@@ -193,7 +193,7 @@ class TimingBase(
                 batching in sizes of batch_size. Default is -1.
             mode_selection: Determines the type of mode
                 filtering to perform. If None, perform our base mode filtering
-                with eps as the fractional accuracy on the total power.
+                with mode_selection_threshold as the fractional accuracy on the total power.
                 If 'all', it will run all modes without filtering. If a list of
                 tuples (or lists) of mode indices
                 (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
@@ -232,7 +232,7 @@ class TimingBase(
         a, xI0 = self.sanity_check_init(M, mu, a, p0, e0, xI0)
         
         # Time the trajectory generation
-        start_time = time.time()
+        start_time = time.perf_counter()
         
         # get trajectory
         (t, p, e, xI, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
@@ -252,10 +252,10 @@ class TimingBase(
         )
         
         # Log the time taken
-        trajectory_time = time.time() - start_time
+        trajectory_time = time.perf_counter() - start_time
         print(f"Trajectory generation took {trajectory_time} seconds.")
         
-        start_time = time.time()
+        start_time = time.perf_counter()
         # makes sure p and e are generally within the model
         self.sanity_check_traj(a, p, e, xI)
      
@@ -284,7 +284,7 @@ class TimingBase(
         if self.mode_selector.is_predictive:
             # overwrites mode_selection so it's now a list of modes to keep, ready to feed into amplitudes
             mode_selection = self.mode_selector(
-                M, mu, a * xI0, p0, e0, 1.0, theta, phi, T, eps
+                M, mu, a * xI0, p0, e0, 1.0, theta, phi, T, mode_selection_threshold
             )  # TODO: update this if more arguments are required
 
         # split into batches
@@ -489,7 +489,7 @@ class TimingBase(
                     ylms,
                     modeinds,
                     fund_freq_args=fund_freq_args,
-                    eps=eps,
+                    mode_selection_threshold=mode_selection_threshold,
                 )
 
             # store number of modes for external information
@@ -531,9 +531,9 @@ class TimingBase(
 
                 phase_t_in = None
             # Log the time taken
-            amplitude_time = time.time() - start_time
+            amplitude_time = time.perf_counter() - start_time
             print(f"Amplitude generation took {amplitude_time} seconds.")
-            start_time = time.time()
+            start_time = time.perf_counter()
             # create waveform
             waveform_temp = self.create_waveform(
                 t_temp,
@@ -563,11 +563,11 @@ class TimingBase(
             # # return entire waveform
             # else:
             #     waveform = waveform_temp
-            summation_time = time.time() - start_time
+            summation_time = time.perf_counter() - start_time
             print(f"Waveform summation took {summation_time} seconds.")
             waveform = waveform_temp
 
-        return trajectory_time, amplitude_time, summation_time
+        return trajectory_time, amplitude_time, summation_time, waveform
 
 
 class TimingWaveform(
@@ -733,27 +733,39 @@ class TimingWaveform(
 
 
 # parameters
-T = 2.0  # years
+T = 4.0  # years
 dt = 5.0  # seconds
-M = 1000000.0
-mu = 50.0
-a = 0.9
-p0 = 12.510272236947417
-e0 = 0.4
+t_vec = np.arange(0, T * 366 * 24 * 3600, dt)
+
+M = 113203.679447
+mu = 8.747957
+a = 0.493489
+p0 = 24.630216
+e0 = 0.895723
 theta = np.pi / 3  # polar viewing angle
 phi = np.pi / 4  # azimuthal viewing angle
 dist = 1.0  # distance
+p0,e0 = 8.088369502512904, 0.6258659477788314
+M = 2404057.8736777855
+M = 2.40405003e+06 
+mu = 7.84440783e+00 
+a = 2.67539618e-01 
+p0 = 8.08836950e+00
+e0 = 6.25865948e-01
+import matplotlib.pyplot as plt
+for outtype in ["fd", "td"]:
+    print("output type", outtype)
+    wave_timing = TimingWaveform(sum_kwargs={"output_type": outtype})#inspiral_kwargs={"err": 1e-8})
 
-
-wave_timing = TimingWaveform(inspiral_kwargs={"err": 1e-8})
-
-wave_timing(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-5)
-
-print("Now actual timing")
-tic = time.time()
-trajectory_time, amplitude_time, summation_time = wave_timing(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-5)
-toc = time.time()
-print("total speed",toc - tic, " in agreement with ", trajectory_time + amplitude_time + summation_time)
-print("trajectory speed:", trajectory_time, "percentage:", trajectory_time/ (toc - tic))
-print("amplitude speed:", amplitude_time, "percentage:",amplitude_time/ (toc - tic))
-print("summation speed:", summation_time, "percentage:",summation_time/ (toc - tic))
+    trajectory_time, amplitude_time, summation_time, wave = wave_timing(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, mode_selection_threshold=1e-5)
+    
+    print("Now actual timing")
+    tic = time.perf_counter()
+    trajectory_time, amplitude_time, summation_time, wave = wave_timing(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, mode_selection_threshold=1e-5)
+    toc = time.perf_counter()
+    print("total speed",toc - tic, " in agreement with ", trajectory_time + amplitude_time + summation_time)
+    print("trajectory speed:", trajectory_time, "percentage:", trajectory_time/ (toc - tic))
+    print("amplitude speed:", amplitude_time, "percentage:",amplitude_time/ (toc - tic))
+    print("summation speed:", summation_time, "percentage:",summation_time/ (toc - tic))
+    if outtype == "td":
+        plt.figure(); plt.plot(t_vec[:wave.size]/86400, wave.real.get()); plt.savefig("waveform.png")

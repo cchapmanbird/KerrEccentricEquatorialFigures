@@ -1,3 +1,4 @@
+#!/data/lsperi/miniconda3/envs/few_env/bin/python
 """
 This script runs a timing test for the FastEMRIWaveforms package.
 """
@@ -123,9 +124,11 @@ if __name__ == "__main__":
     traj_module = EMRIInspiral(func=KerrEccEqFlux)
 
     # Initialize waveform generators
+    error_inspiral = 1e-1
     # frequency domain
     few_gen = GenerateEMRIWaveform(
         "FastKerrEccentricEquatorialFlux",
+        # inspiral_kwargs=dict(err=error_inspiral),
         sum_kwargs=dict(pad_output=True, output_type="fd", odd_len=True),
         return_list=True,
     )
@@ -133,9 +136,12 @@ if __name__ == "__main__":
     # time domain
     td_gen = GenerateEMRIWaveform(
         "FastKerrEccentricEquatorialFlux",
+        # inspiral_kwargs=dict(err=error_inspiral),
         sum_kwargs=dict(pad_output=True, odd_len=True),
         return_list=True,
     )
+
+    output_filename = args.filename + f"InspErr{error_inspiral}" +".json"
 
     # define the injection parameters
     mass_1 = 0.5e6  # central object mass
