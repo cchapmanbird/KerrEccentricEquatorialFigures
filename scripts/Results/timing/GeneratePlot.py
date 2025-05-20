@@ -17,7 +17,7 @@ plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["Computer Modern"]
 
 # %%
-fname = 'new_timing_4.0yr.json'
+fname = 'lakshmi_timing_4.0yrInspErrDefault.json'
 timing_data = json.load(open(fname, 'r'))
 
 # %%
@@ -139,8 +139,8 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['-', '--'])):
     fact = np.random.uniform(-0.01, 0.01) 
     lb = np.logspace(np.log10(_min*(1-fact)), np.log10(_max*(1+fact)), 100)
     
-    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $k = 10^{{{eps_val_log10}}}$", linestyle=pc, color="C0")
-    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $k = 10^{{{eps_val_log10}}}$", linestyle=pc, color="C1")
+    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, r$\mathcal{{k}}= 10^{{{eps_val_log10}}}$", linestyle=pc, color="C0")
+    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, r$\mathcal{{k}}= 10^{{{eps_val_log10}}}$", linestyle=pc, color="C1")
     print(f"Median TD timing for eps={eps_val}: {np.median(data_td):.4f} s")
     print(f"Median FD timing for eps={eps_val}: {np.median(data_fd):.4f} s")
     # Find and print the parameters for the minimum and maximum TD and FD timings
@@ -173,8 +173,8 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange',
     # Shift the bins slightly for each histogram
     lb = np.logspace(np.log10(_min), np.log10(_max), 100)
     
-    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $k = 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
-    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $k = 10^{{{eps_val_log10}}}$", color=pc)
+    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $\mathcal{{k}}= 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
+    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $\mathcal{{k}}= 10^{{{eps_val_log10}}}$", color=pc)
     ax.set_xscale('log')
     ax.set_xlabel('Mismatch', fontsize=label_fontsize)
     # ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
@@ -196,8 +196,8 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange',
     mass_1 = data_df[(data_df['mode_selection_threshold'] == eps_val) & (data_df['dt'] == dt)]['mass_1']
     eps_val_log10 = int(np.log10(eps_val))
     ax.plot(mass_1, data_td, '.')
-    # ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $k = 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
-    # ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $k = 10^{{{eps_val_log10}}}$", color=pc)
+    # ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $\mathcal{k}= 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
+    # ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $\mathcal{k}= 10^{{{eps_val_log10}}}$", color=pc)
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_ylabel('Mismatch', fontsize=label_fontsize)
@@ -219,8 +219,8 @@ for variable in ["mass_1", "spin", "e0"]:
         eps_val_log10 = int(np.log10(eps_val))
         ax.plot(mass_1, data_td, 'P',alpha=0.1, label='TD speed')
         ax.plot(mass_1, data_fd, 'X',alpha=0.1, label='FD speed')
-        # ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $k = 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
-        # ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $k = 10^{{{eps_val_log10}}}$", color=pc)
+        # ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $\mathcal{k}= 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
+        # ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $\mathcal{k}= 10^{{{eps_val_log10}}}$", color=pc)
         
         if variable == 'mass_1':
             ax.set_xscale('log')

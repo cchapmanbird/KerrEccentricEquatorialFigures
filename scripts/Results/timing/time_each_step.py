@@ -737,23 +737,25 @@ T = 4.0  # years
 dt = 5.0  # seconds
 t_vec = np.arange(0, T * 366 * 24 * 3600, dt)
 
-M = 113203.679447
-mu = 8.747957
-a = 0.493489
-p0 = 24.630216
-e0 = 0.895723
-theta = np.pi / 3  # polar viewing angle
-phi = np.pi / 4  # azimuthal viewing angle
-dist = 1.0  # distance
-p0,e0 = 8.088369502512904, 0.6258659477788314
-M = 2404057.8736777855
-M = 2.40405003e+06 
-mu = 7.84440783e+00 
-a = 2.67539618e-01 
-p0 = 8.08836950e+00
-e0 = 6.25865948e-01
+M = 4323611.02891664
+mu = 54.69393999936625
+a = 0.4193555794019499
+p0 = 8.67806123446356
+e0 = 0.08882266926977365
+xI = 1.0
+dist = 1.0
+theta = 1.0471975511965976  # qS
+phi = 1.0471975511965976    # phiS
+qK = 1.0471975511965976
+phiK = 1.0471975511965976
+Phi_phi0 = 1.0471975511965976
+Phi_theta0 = 0.0
+Phi_r0 = 1.0471975511965976
+print("fd_timing", 0.1057377909310162,"td_timing", 0.09892449527978897,)
+
 import matplotlib.pyplot as plt
 for outtype in ["fd", "td"]:
+    print("------------------------")
     print("output type", outtype)
     wave_timing = TimingWaveform(sum_kwargs={"output_type": outtype})#inspiral_kwargs={"err": 1e-8})
 

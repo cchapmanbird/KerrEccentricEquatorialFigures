@@ -7,3 +7,20 @@
 | 1e-05   | TD     | 0.1356     | 0.0808  | mass_1: 6.93e+06<br>mass_2: 6.93<br>spin: 0.872<br>p0: 3.86<br>e0: 0.00051 | 0.2733  | mass_1: 1.13e+05<br>mass_2: 8.75<br>spin: 0.493<br>p0: 24.63<br>e0: 0.896 |
 | 1e-05   | FD     | 0.1517     | 0.0692  | mass_1: 9.41e+06<br>mass_2: 10.63<br>spin: 0.629<br>p0: 5.04<br>e0: 0.429 | 1.8511  | mass_1: 2.61e+05<br>mass_2: 21.02<br>spin: 0.990<br>p0: 19.96<br>e0: 0.889 |
 
+# Detailed Timing Breakdown
+
+## Case 1 (output type: fd)
+
+- **Trajectory generation:** 0.1192 s (1.5%)
+- **Amplitude generation:** 0.0183 s (0.2%)
+- **Waveform summation:** 7.6873 s (98.2%)
+- **Total:** 7.8270 s (matches 7.8248 s)
+
+## Case 2 (output type: td)
+
+- **Trajectory generation:** 0.1167 s (14.4%)
+- **Amplitude generation:** 0.0225 s (2.8%)
+- **Waveform summation:** 0.6720 s (82.8%)
+- **Total:** 0.8120 s (matches 0.8113 s)
+
+Waveform summation dominates the computation time in both cases.
