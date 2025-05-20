@@ -22,7 +22,7 @@
 
 #!/bin/bash
 # Usage: bash submit_run_timing_jobs.sh
-
+# /data/lsperi/KerrEccentricEquatorialFiguresRestructure/scripts/Results/timing
 # export CUDA_VISIBLE_DEVICES=3
 durations=(4.0)
 

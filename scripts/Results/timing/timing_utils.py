@@ -193,7 +193,6 @@ def time_full_waveform_generation(
 
     for params in iterator:
         internal_param_list = []
-        print(params)
         for dt in dt_list_to_use:
             for eps in eps_list_to_use:
                 wvf_kwargs = waveform_kwargs_base.copy()
@@ -258,8 +257,8 @@ def time_full_waveform_generation(
                     "fd_timing": fd_time,
                     "td_timing": td_time,
                     "overlap": overlap,
-                    "power_fd": power_fd,
-                    "power_td": power_td,
+                    "power_fd": float(power_fd),
+                    "power_td": float(power_td),
                 }
 
                 internal_param_list.append(internal_results_dict.copy())

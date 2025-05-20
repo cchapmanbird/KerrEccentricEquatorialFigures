@@ -1,7 +1,7 @@
 # Condor submit file for run_timing.py job submission
 universe = vanilla
 executable = /data/lsperi/KerrEccentricEquatorialFiguresRestructure/scripts/Results/timing/run_timing.py
-arguments = -v -f $(output_file) --generate_parameters --nsamples 10000 --epsilon --duration $(duration) --iterations 1 -l $(log_file)
+arguments = -v -f $(output_file) --generate_parameters --nsamples 10 --epsilon --duration $(duration) --iterations 1 -l $(log_file)
 
 output = $(output_file).out
 error  = $(output_file).err
