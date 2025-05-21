@@ -1,4 +1,6 @@
 import sys, os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0" # set the GPU to use
+os.environ["OMP_NUM_THREADS"] = "1" # set the number of threads to use
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -59,7 +61,10 @@ plt.rcParams.update(custom_rcParams)
 
 from few.waveform import GenerateEMRIWaveform
 from few.utils.constants import YRSID_SI
+from few.utils.utility import get_p_at_t
+from few.trajectory.inspiral import EMRIInspiral
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
+
 
 LIGHT_IMRI_PARAMS = dict(
     M=1e5, 
@@ -115,7 +120,7 @@ STRONG_FIELD_EMRI_PARAMS = dict(
     Phi_theta0=0.0,
     Phi_r0=3.0,
     dt=5.0,
-    label = "Strong_field_emri"
+    label = "Strong-field_emri"
 )
 
 PROGRADE_EMRI_PARAMS = dict(
@@ -217,13 +222,14 @@ def get_params_from_dict(params_dict):
     dt = params_dict["dt"]
     label = params_dict["label"]
 
-    return label, (M, mu, a, p0, e0, x_I0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0), dt
+    return label, [M, mu, a, p0, e0, x_I0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0], dt
 
 def produce_plot(logger,
                  figsize=(10, 6), 
                  use_gpu=False, 
                  first_nseconds=0,
                  last_nseconds=0,
+                 seconds_to_plunge=0,
                  inspiral_kwargs={},
                  plot_hx=True,
                  spline=False,
@@ -233,11 +239,14 @@ def produce_plot(logger,
     # Set the color palette
     mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=cpal)
     
+    Tobs = 2.0 # 2.0 years
+
     LEFT_END_SECONDS = first_nseconds
-    RIGHT_START_SECONDS = -1 * last_nseconds
+    RIGHT_START_SECONDS = Tobs * YRSID_SI - seconds_to_plunge 
+    RIGHT_END_SECONDS = Tobs * YRSID_SI - seconds_to_plunge + last_nseconds #-1 * last_nseconds
 
     logger.info(f"plotting the first {LEFT_END_SECONDS} seconds of the waveform")
-    logger.info(f"plotting the last {-1* RIGHT_START_SECONDS} seconds of the waveform")
+    logger.info(f"plotting {RIGHT_END_SECONDS - RIGHT_START_SECONDS} seconds of the waveform, {seconds_to_plunge} seconds before plunge")
 
     backend = "gpu" if use_gpu else "cpu"
     fig, axes = plt.subplots(nrows=5, ncols=2, figsize=figsize, sharex='col', sharey='row')
@@ -249,8 +258,25 @@ def produce_plot(logger,
         force_backend=backend,
         return_list=False,
     )
+    traj = EMRIInspiral(func='KerrEccEqFlux') 
 
-    Tobs = 2.0 # 2.0 years
+
+    def get_p0(M, mu, a, e0, x0, Tobs):
+        # fix p0 given T
+        left_bound = None#get_separatrix(a,e0,x0)+0.1
+        right_bound = 200.0
+        try:
+            #try:
+            T_factor = 1.0
+            p0 = get_p_at_t(traj, Tobs * T_factor, [M, mu, a, e0, x0], bounds=[left_bound, right_bound])
+            # except:
+            #     left_bound = max(left_bound, 3.41)
+            #     p0 = get_p_at_t(traj, Tobs * 0.999, [M, mu, a, e0, x0], bounds=[left_bound, right_bound])
+        except Exception as e:
+            logger.info(e)
+            p0 = None   
+        #logger.info("new p0 fixed by Tobs, p0=", p0, traj(M, mu, a, p0, e0, x0, T=10.0)[0][-1]/YRSID_SI)
+        return p0
 
     def load_waveform(source_dict, use_cached=True):
         #save the waveform to a file to edit it also offline on the laptop
@@ -270,6 +296,10 @@ def produce_plot(logger,
         else:
             # Generate the waveform
             logger.info(f"Generating waveform")
+            #tweak the parameters to get the right p0
+            logger.info(f"p0 before: {params[3]}")
+            params[3] = get_p0(params[0], params[1], params[2], params[4], params[5], Tobs)
+            logger.info(f"p0 after: {params[3]}")
             wf = Kerr_waveform(*params, dt=dt, T=Tobs, mode_selection_threshold=0.0)
 
             if hasattr(wf, "get"): # convert from cupy to numpy
@@ -300,20 +330,22 @@ def produce_plot(logger,
         #breakpoint()
         logger.info(f"Plotting {source_dict['label']}")
 
-        t, hp, hc = load_waveform(source_dict, use_cached=False)
+        t, hp, hc = load_waveform(source_dict, use_cached=True)
 
         left_end = np.ceil(LEFT_END_SECONDS / source_dict['dt'])
         right_start = np.floor(RIGHT_START_SECONDS / source_dict['dt'])
+        right_end = np.floor(RIGHT_END_SECONDS / source_dict['dt'])
         LEFT_END = int(left_end)
         RIGHT_START = int(right_start)
+        RIGHT_END = int(right_end)
 
         t_start = t[:LEFT_END]
-        t_end = t[RIGHT_START:]
+        t_end = t[RIGHT_START:RIGHT_END]
 
         hp_start = hp[:LEFT_END]
-        hp_end = hp[RIGHT_START:]
+        hp_end = hp[RIGHT_START:RIGHT_END]
         hc_start = hc[:LEFT_END]
-        hc_end = hc[RIGHT_START:]
+        hc_end = hc[RIGHT_START:RIGHT_END]
 
         if spline:
             spline_dt = 0.1
@@ -344,7 +376,9 @@ def produce_plot(logger,
 
         # Set the x-axis limits
         axs[0].set_xlim(-1 , LEFT_END_SECONDS)
-        axs[1].set_xlim(Tobs  * YRSID_SI + RIGHT_START_SECONDS, Tobs * 1.000001 * YRSID_SI)
+        #axs[1].set_xlim(Tobs  * YRSID_SI + RIGHT_START_SECONDS, Tobs * 1.00000 * YRSID_SI)
+        #axs[1].set_xlim(Tobs  * YRSID_SI - RIGHT_START_SECONDS, Tobs * YRSID_SI - RIGHT_START_SECONDS + RIGHT_END_SECONDS)
+        axs[1].set_xlim(RIGHT_START_SECONDS, RIGHT_END_SECONDS)
 
         #set the y-axis label
         axis_label = process_label(source_dict['label'])
@@ -362,12 +396,18 @@ def produce_plot(logger,
         
         #set the legend for the first row
         # if plot_hx: 
-        axs[0,0].legend(loc='upper right', handlelength=1.5)
+        axs[0,0].legend(loc='upper left', handlelength=1.2)
         # Set the x-axis label
         axs[-1,0].set_xlabel("Time [s]")
         axs[-1,1].set_xlabel("Time [s]")
 
-    all_dicts = [LIGHT_IMRI_PARAMS, HEAVY_IMRI_PARAMS, STRONG_FIELD_EMRI_PARAMS, PROGRADE_EMRI_PARAMS, RETROGRADE_EMRI_PARAMS]#[::-1]
+    all_dicts = [
+                PROGRADE_EMRI_PARAMS, 
+                STRONG_FIELD_EMRI_PARAMS, 
+                HEAVY_IMRI_PARAMS,
+                LIGHT_IMRI_PARAMS, 
+                RETROGRADE_EMRI_PARAMS
+                ]#[::-1]
     fill_figure(axes, all_dicts)
 
     #remove x ticks from the top row
@@ -378,9 +418,9 @@ def produce_plot(logger,
     
     # add a title to the first row
     title_start = format_title(LEFT_END_SECONDS)
-    title_end = format_title(-1 * RIGHT_START_SECONDS)
+    title_end = format_title(seconds_to_plunge)
     axes[0,0].set_title("First " + title_start)
-    axes[0,1].set_title("Last " + title_end)
+    axes[0,1].set_title( title_end + " from plunge")
     plt.tight_layout()
     #plt.subplots_adjust(wspace=0.2, hspace=0.3)
     plt.savefig(savename)
@@ -410,6 +450,9 @@ if __name__ == "__main__":
     last_nhours = 1
     last_nseconds = ((last_nmonths * 30 + last_nweeks * 7 + last_ndays) * 24 + last_nhours) * 3600
 
+    hours_to_plunge = 6
+    seconds_to_plunge = hours_to_plunge * 3600
+
     logger = logging.getLogger("science_cases")
     level = logging.INFO
     logger.setLevel(level)
@@ -429,6 +472,7 @@ if __name__ == "__main__":
                 use_gpu=use_gpu, 
                 first_nseconds=first_nseconds,
                 last_nseconds=last_nseconds,
+                seconds_to_plunge=seconds_to_plunge,
                 inspiral_kwargs=inspiral_kwargs,
                 plot_hx=plot_hx,
                 spline=spline,
