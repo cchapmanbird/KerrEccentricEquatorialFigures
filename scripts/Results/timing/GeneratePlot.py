@@ -15,11 +15,12 @@ title_fontsize = 16
 plt.rcParams["text.usetex"] = True
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["Computer Modern"]
+plt.rcParams["mathtext.fontset"] = "dejavuserif"
 
 # %%
 fname = 'lakshmi_timing_4.0yrInspErrDefault.json'
 timing_data = json.load(open(fname, 'r'))
-
+fname = "results/" + fname[:-5]
 # %%
 def cast_results_to_dataframe(input_data):
     output = []
@@ -32,9 +33,12 @@ def cast_results_to_dataframe(input_data):
     key_list.append('fd_timing')
     key_list.append('td_timing')
     key_list.append('overlap')
+    key_list.append('power_fd')
+    key_list.append('power_td')
 
     for single in input_data:
         _output_list = list(single['parameters'].values())
+        print(single['duration'])
         _output_list.append(single['duration'])
         _output_list.append(single['iterations'])
         for data in single['timing_results']:
@@ -44,6 +48,8 @@ def cast_results_to_dataframe(input_data):
             temp.append(data['fd_timing'])
             temp.append(data['td_timing'])
             temp.append(data['overlap'])
+            temp.append(data['power_fd'])
+            temp.append(data['power_td'])
             output.append(temp.copy())
         
     return df(output, columns=key_list), key_list
@@ -65,6 +71,8 @@ def corner_plot(dataframe, minmax=None, use_td=True, plot_type='timing', eps_val
         timing_values = (data_given_eps['fd_timing']) / (data_given_eps['td_timing'])
     if plot_type == 'overlap':
         timing_values = np.log10(np.abs(1-data_given_eps['overlap']))
+    if plot_type == 'power':
+        timing_values = np.log10(np.abs(1-data_given_eps['power_td']))
     # remove outliers outside 99.9 percentile
     mask = (timing_values > np.percentile(timing_values, 0.1)) & (timing_values < np.percentile(timing_values, 99.9))
     timing_values = timing_values[mask]
@@ -126,7 +134,7 @@ _min_td, _max_td = data_df['td_timing'].min(), data_df['td_timing'].max()
 _min, _max = min([_min_fd, _min_td]), max([_max_fd, _max_td])
 # _max = 1.0
 
-fig, ax = plt.subplots(1, 1, figsize=(7, 5))
+fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 dt = 5.0
 shift_factor = 0.9  # Factor to slightly shift the bins for each histogram
 for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['-', '--'])):
@@ -139,8 +147,8 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['-', '--'])):
     fact = np.random.uniform(-0.01, 0.01) 
     lb = np.logspace(np.log10(_min*(1-fact)), np.log10(_max*(1+fact)), 100)
     
-    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, r$\mathcal{{k}}= 10^{{{eps_val_log10}}}$", linestyle=pc, color="C0")
-    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, r$\mathcal{{k}}= 10^{{{eps_val_log10}}}$", linestyle=pc, color="C1")
+    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"Time Domain, $k = 10^{{{eps_val_log10}}}$", linestyle=pc, color="C0")
+    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"Frequency Domain, $k = 10^{{{eps_val_log10}}}$", linestyle=pc, color="C1")
     print(f"Median TD timing for eps={eps_val}: {np.median(data_td):.4f} s")
     print(f"Median FD timing for eps={eps_val}: {np.median(data_fd):.4f} s")
     # Find and print the parameters for the minimum and maximum TD and FD timings
@@ -158,7 +166,8 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['-', '--'])):
     # ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
     ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
     ax.legend(fontsize=label_fontsize)
-plt.savefig(fname[:-5] + '_timing_dt_5.png', dpi=300)
+plt.tight_layout()
+plt.savefig(fname + 'timing_dt_5.png', dpi=300)
 
 # histogram overlap
 _min, _max = np.abs(1-data_df['overlap']).min(), np.abs(1-data_df['overlap']).max()
@@ -173,14 +182,14 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange',
     # Shift the bins slightly for each histogram
     lb = np.logspace(np.log10(_min), np.log10(_max), 100)
     
-    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $\mathcal{{k}}= 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
-    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $\mathcal{{k}}= 10^{{{eps_val_log10}}}$", color=pc)
+    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $k= 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
+    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $k= 10^{{{eps_val_log10}}}$", color=pc)
     ax.set_xscale('log')
     ax.set_xlabel('Mismatch', fontsize=label_fontsize)
     # ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
     ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
     ax.legend(fontsize=label_fontsize)
-plt.savefig(fname[:-5] + '_overlap_dt_5.png', dpi=300)
+plt.savefig(fname + 'overlap_dt_5.png', dpi=300)
 
 
 
@@ -206,7 +215,7 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange',
     # ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
     ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
     ax.legend(fontsize=label_fontsize)
-plt.savefig(fname[:-5] + '_mismatch_M_dt_5.png', dpi=300)
+plt.savefig(fname + 'mismatch_M_dt_5.png', dpi=300)
 
 for variable in ["mass_1", "spin", "e0"]:
     fig, ax = plt.subplots(1, 1, figsize=(7, 5))
@@ -231,17 +240,17 @@ for variable in ["mass_1", "spin", "e0"]:
         # ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
         ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
         ax.legend(fontsize=label_fontsize)
-    plt.savefig(fname[:-5] + '_timing_' + variable + '_dt_5.png', dpi=300)
+    plt.savefig(fname + 'timing_' + variable + '_dt_5.png', dpi=300)
 
 # %%
 # corner_plot(data_df, eps_value=1e-5, dt_value=5.0)
-# plt.savefig(fname[:-5] + '_corner_td.png', dpi=300)
+# plt.savefig(fname + 'corner_td.png', dpi=300)
 
-# corner_plot(data_df, eps_value=1e-5, dt_value=5.0, use_td=False)
-# plt.savefig(fname[:-5] + '_corner_fd.png', dpi=300)
+corner_plot(data_df, eps_value=1e-5, dt_value=5.0, plot_type='power')
+plt.savefig(fname + 'corner_power.png', dpi=300)
 
-# corner_plot(data_df, eps_value=1e-5, dt_value=5.0, plot_type='ratio')
-# plt.savefig(fname[:-5] + '_corner_ratio.png', dpi=300)
+corner_plot(data_df, eps_value=1e-5, dt_value=5.0, plot_type='ratio')
+plt.savefig(fname + 'corner_ratio.png', dpi=300)
 
-# corner_plot(data_df, eps_value=1e-5, dt_value=5.0, plot_type='overlap')
-# plt.savefig(fname[:-5] + '_corner_overlap.png', dpi=300)
+corner_plot(data_df, eps_value=1e-5, dt_value=5.0, plot_type='overlap')
+plt.savefig(fname + 'corner_overlap.png', dpi=300)

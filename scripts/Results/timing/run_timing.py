@@ -124,7 +124,7 @@ if __name__ == "__main__":
     traj_module = EMRIInspiral(func=KerrEccEqFlux)
 
     # Initialize waveform generators
-    error_inspiral = "Default"#1e-1
+    error_inspiral = "Default_iterations" + str(args.iterations) #1e-1
     # frequency domain
     few_gen = GenerateEMRIWaveform(
         "FastKerrEccentricEquatorialFlux",
