@@ -18,7 +18,7 @@ plt.rcParams["font.serif"] = ["Computer Modern"]
 plt.rcParams["mathtext.fontset"] = "dejavuserif"
 
 # %%
-fname = 'lakshmi_timing_4.0yrInspErrDefault.json'
+fname = 'lakshmi_timing_4.0yrInspErrDefault.json'#"lakshmi_timing_4.0yrInspErrDefault_iterations10.json"#
 timing_data = json.load(open(fname, 'r'))
 fname = "results/" + fname[:-5]
 # %%
@@ -147,8 +147,8 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['-', '--'])):
     fact = np.random.uniform(-0.01, 0.01) 
     lb = np.logspace(np.log10(_min*(1-fact)), np.log10(_max*(1+fact)), 100)
     
-    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"Time Domain, $k = 10^{{{eps_val_log10}}}$", linestyle=pc, color="C0")
-    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"Frequency Domain, $k = 10^{{{eps_val_log10}}}$", linestyle=pc, color="C1")
+    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"Time Domain, $\kappa = 10^{{{eps_val_log10}}}$", linestyle=pc, color="C0")
+    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"Frequency Domain, $\kappa = 10^{{{eps_val_log10}}}$", linestyle=pc, color="C1")
     print(f"Median TD timing for eps={eps_val}: {np.median(data_td):.4f} s")
     print(f"Median FD timing for eps={eps_val}: {np.median(data_fd):.4f} s")
     # Find and print the parameters for the minimum and maximum TD and FD timings
@@ -182,8 +182,8 @@ for idx, (eps_val, pc) in enumerate(zip([1e-2, 1e-5], ['tab:blue', 'tab:orange',
     # Shift the bins slightly for each histogram
     lb = np.logspace(np.log10(_min), np.log10(_max), 100)
     
-    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $k= 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
-    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $k= 10^{{{eps_val_log10}}}$", color=pc)
+    ax.hist(data_td, density=True, bins=lb, histtype='step', label=rf"TD, $\kappa= 10^{{{eps_val_log10}}}$", linestyle='--', color=pc)
+    ax.hist(data_fd, density=True, bins=lb, histtype='step', label=rf"FD, $\kappa= 10^{{{eps_val_log10}}}$", color=pc)
     ax.set_xscale('log')
     ax.set_xlabel('Mismatch', fontsize=label_fontsize)
     # ax.set_title(rf"$\Delta t = ${dt} s", fontsize=title_fontsize)
