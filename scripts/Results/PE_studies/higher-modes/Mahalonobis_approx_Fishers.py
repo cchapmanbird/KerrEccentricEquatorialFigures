@@ -1,7 +1,6 @@
 import numpy as np
 import cupy as cp
 import matplotlib.pyplot as plt
-
 #plt.rcParams["font.family"] = "Times New Roman"
 #plt.rcParams["mathtext.fontset"] = "custom"
 #plt.rcParams["mathtext.rm"] = "Times New Roman"
@@ -33,7 +32,7 @@ from stableemrifisher.fisher.derivatives import derivative
 
 #LISAanalysistools imports
 from fastlisaresponse import ResponseWrapper  # Response function 
-from lisatools.detector import ESAOrbits #ESAOrbits correspond to esa-trailing-orbits.h5
+from lisatools.detector import ESAOrbits, EqualArmlengthOrbits #ESAOrbits correspond to esa-trailing-orbits.h5, EqualArmlengthOrbits are equalarmlength-orbits.h5
 
 from lisatools.sensitivity import get_sensitivity, A1TDISens, E1TDISens, T1TDISens
 
@@ -46,8 +45,15 @@ if not use_gpu:
     #tune few configuration
     cfg_set = few.get_config_setter(reset=True)
     
+    # Uncomment if you want to force CPU or GPU usage
+    # Leave commented to let FEW automatically select the best available hardware
     #   - To force CPU usage:
     cfg_set.enable_backends("cpu")
+    #   - To force GPU usage with CUDA 12.x
+    #cfg_set.enable_backends("cuda12x", "cpu")
+    #   - To force GPU usage with CUDA 11.x
+    # cfg_set.enable_backends("cuda11x", "cpu")
+    #
     cfg_set.set_log_level("info");
 else:
     pass #let the backend decide for itself.
@@ -56,8 +62,8 @@ else:
 T_LISA = 1.0 #observation time, years
 dt = 10.0 #sampling interval, seconds
 
-M = 1e6 #MBH mass in solar masses
-mu = 10.0 #secondary mass in solar masses
+m1 = 1.5e6 #MBH mass in solar masses (source frame)
+m2 = 15.0 #secondary mass in solar masses (source frame)
 x0 = 1.0 #inclination, must be = 1.0 for equatorial model
 
 # initial phases
@@ -72,13 +78,13 @@ qS = np.pi / 5  # polar sky angle
 phiS = np.pi / 6  # azimuthal viewing angle
 dist = 1.0  # distance in Gpc. We'll adjust this later to fix the SNR as 100.0
 
-filename = f'Maha_ae_grid_Mtot_{M+mu}'
+filename = f'Maha_ae_grid_Mtot_{m1+m2}'
 if not os.path.exists(filename):
     os.mkdir(filename)
 
-calculate_Fishers = False #calculate Fishers using the full model
-calculate_derivatives = False #calculate derivatives using approximate models (for CV-bias calculation)
-calculate_CV_biases = False #calculate the Cutler-Valisneri biases.
+calculate_Fishers = True #calculate Fishers using the full model
+calculate_derivatives = True #calculate derivatives using approximate models (for CV-bias calculation)
+calculate_CV_biases = True #calculate the Cutler-Valisneri biases.
 
 kerr_traj = EMRIInspiral(func=KerrEccEqFlux)
 
@@ -108,9 +114,14 @@ except FileNotFoundError:
         a = param_grid[i,0]
         e0 = param_grid[i,1]
         
-        p0 = get_p_at_t(traj_module=kerr_traj, t_out=T_LISA, traj_args=[M, mu, a, e0, x0, Phi_phi0, Phi_theta0, Phi_r0])
+        p0 = get_p_at_t(traj_module=kerr_traj, t_out=T_LISA, traj_args=[m1, m2, a, e0, x0, Phi_phi0, Phi_theta0, Phi_r0])
         
         p_range.append(p0)
+
+        #check p for plunge trajectories
+        #t, p, e, x, pp, pt, pr = kerr_traj(m1, m2, a, p0, e0, x0, Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T_LISA, dt=dt)
+    
+        #print(t[-1] - (T_LISA*YRSID_SI))
         
     p_range = np.array(p_range)
 
@@ -122,6 +133,11 @@ except FileNotFoundError:
         f.create_dataset("p0", data=p_range) #save plunging traj p0
         
     p_range += 0.5 #buffer
+    
+    #with h5py.File(f"{filename}/p_e_grid_data.h5", "r") as f:
+    #    loaded_data = f["dataset_name"][:]  # Read the dataset into a NumPy array
+    
+    #print(loaded_data)
     
     plt.scatter(param_grid[:,0],param_grid[:,1])
     plt.xlabel('a range',fontsize=16)
@@ -149,11 +165,11 @@ Waveform_model = GenerateEMRIWaveform(
             )
 
 #setup LISA response
-tdi_gen ="1st generation"# "2nd generation"#
+tdi_gen ="2nd generation"# "2nd generation"#
 
 order = 20  # interpolation order (should not change the result too much)
 tdi_kwargs_esa = dict(
-    orbits=ESAOrbits(use_gpu=use_gpu), order=order, tdi=tdi_gen, tdi_chan="AET",
+    orbits=EqualArmlengthOrbits(use_gpu=use_gpu), order=order, tdi=tdi_gen, tdi_chan="AET",
 )  # could do "AET"
 
 index_lambda = 8
@@ -182,7 +198,7 @@ EMRI_TDI = ResponseWrapper(
 channels = [A1TDISens, E1TDISens, T1TDISens]
 noise_kwargs = [{"sens_fn": channel_i} for channel_i in channels]
 
-param_names = ['M','mu','a','p0','e0','dist','qS','phiS','qK','phiK','Phi_phi0','Phi_r0']
+param_names = ['M','mu','a','p0','e0','dist','qS','phiS','qK','phiK','Phi_phi0','Phi_r0'] #M, mu are primary and secondary masses in the SEF code respectively. This will be made consistent with FEW in a later version.
 
 sef_kwargs = {'EMRI_waveform_gen':EMRI_TDI, #EMRI waveform model with TDI response
               'param_names': param_names, #params to be varied
@@ -212,7 +228,7 @@ except:
         e0 = param_grid[i][1]
         p0 = p_range[i]
     
-        param_list = [M, mu, a, p0, e0, x0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
+        param_list = [m1, m2, a, p0, e0, x0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
                 
         #calculate Fisher
         sef = StableEMRIFisher(*param_list, **emri_kwargs, **sef_kwargs)
@@ -233,12 +249,12 @@ except:
     with h5py.File(f"{filename}/data.h5", "a") as f:
         f.create_dataset("dists", data=np.array(dist_range))
         
-def logmasstransform(Fisher, M, mu, index_of_M = 0, index_of_mu = 1):
-    """ transform M, mu -> lnM, lnmu. Fisher transformation: https://en.wikipedia.org/wiki/Fisher_information """
+def logmasstransform(Fisher, m1, m2, index_of_m1 = 0, index_of_m2 = 1):
+    """ transform m1, m2 -> lnm1, lnm2. Fisher transformation: https://en.wikipedia.org/wiki/Fisher_information """
     
     J = np.eye(len(Fisher))
-    J[index_of_M,index_of_M] = M
-    J[index_of_mu,index_of_mu] = mu
+    J[index_of_m1,index_of_m1] = m1
+    J[index_of_m2,index_of_m2] = m2
 
     return J.T@Fisher@J
 
@@ -311,8 +327,9 @@ if calculate_CV_biases:
     alternate_models = [
         #"leqmFastKerr",
         #"l2m2FastKerr",
-        "l2FastKerr",
-        #"errFastKerr"
+        #"l2FastKerr",
+        #"errFastKerr",
+        "AAK",
     ]
     
     for j in range(len(alternate_models)):
@@ -329,6 +346,15 @@ if calculate_CV_biases:
                         
             mode_selector_kwargs = {"mode_selection": specific_modes}
             #emri_kwargs_alt["include_minus_mkn"] = False
+
+            #instantiate alternate waveform model
+            Waveform_model_alt = GenerateEMRIWaveform(
+                    "FastKerrEccentricEquatorialFlux",
+                    sum_kwargs=sum_kwargs,
+                    inspiral_kwargs=inspiral_kwargs,
+                    mode_selector_kwargs=mode_selector_kwargs,
+                    return_list=False,
+                    )
     
         elif alt_mod == "l2FastKerr":
             # only use the dominant l=2 modes
@@ -341,6 +367,15 @@ if calculate_CV_biases:
                         
             mode_selector_kwargs = {"mode_selection": specific_modes}
             #emri_kwargs_alt["include_minus_mkn"] = False
+
+            #instantiate alternate waveform model
+            Waveform_model_alt = GenerateEMRIWaveform(
+                    "FastKerrEccentricEquatorialFlux",
+                    sum_kwargs=sum_kwargs,
+                    inspiral_kwargs=inspiral_kwargs,
+                    mode_selector_kwargs=mode_selector_kwargs,
+                    return_list=False,
+                    )
             
         elif alt_mod == "leqmFastKerr":
             # only use modes with l = m
@@ -353,20 +388,39 @@ if calculate_CV_biases:
                         
             mode_selector_kwargs = {"mode_selection": specific_modes}
             #emri_kwargs_alt["include_minus_mkn"] = False
+
+            #instantiate alternate waveform model
+            Waveform_model_alt = GenerateEMRIWaveform(
+                    "FastKerrEccentricEquatorialFlux",
+                    sum_kwargs=sum_kwargs,
+                    inspiral_kwargs=inspiral_kwargs,
+                    mode_selector_kwargs=mode_selector_kwargs,
+                    return_list=False,
+                    )
     
         elif alt_mod == "errFastKerr":
             mode_selector_kwargs = {"eps": 1e-2} #instead of the default 1e-5
-    
-        filename_bias = os.path.join(filename,alt_mod)
-    
-        #instantiate alternate waveform model
-        Waveform_model_alt = GenerateEMRIWaveform(
-                "FastKerrEccentricEquatorialFlux",
+            #instantiate alternate waveform model
+            Waveform_model_alt = GenerateEMRIWaveform(
+                    "FastKerrEccentricEquatorialFlux",
+                    sum_kwargs=sum_kwargs,
+                    inspiral_kwargs=inspiral_kwargs,
+                    mode_selector_kwargs=mode_selector_kwargs,
+                    return_list=False,
+                    )
+
+        elif alt_mod == 'AAK':
+            #use the 5PN AAK Kludge
+            waveform_kwargs = {}
+            inspiral_kwargs["func"] = "KerrEccEqFlux" #still use relativistic trajectories - only difference is in Amplitudes. 
+            Waveform_model_alt = GenerateEMRIWaveform(
+                "Pn5AAKWaveform",
                 sum_kwargs=sum_kwargs,
                 inspiral_kwargs=inspiral_kwargs,
-                mode_selector_kwargs=mode_selector_kwargs,
-                return_list=False,
+                return_list=False
                 )
+    
+        filename_bias = os.path.join(filename,alt_mod)
     
         EMRI_TDI_alt = ResponseWrapper(
                             waveform_gen=Waveform_model_alt,
@@ -419,7 +473,7 @@ if calculate_CV_biases:
 
                     sef_kwargs['suffix'] = i
 
-                    param_list = [M, mu, a, p0, e0, x0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
+                    param_list = [m1, m2, a, p0, e0, x0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
             
                     #calculate Fisher
                     sef = StableEMRIFisher(*param_list, **emri_kwargs, **sef_kwargs)
@@ -436,7 +490,7 @@ if calculate_CV_biases:
                 except KeyError:
                     with h5py.File(f"{filename_bias}/Fisher_{i}.h5", "r") as f:
                         Fisher = f["Fisher"][:]
-                    Fisher_transform = logmasstransform(Fisher, M, mu)
+                    Fisher_transform = logmasstransform(Fisher, m1, m2)
                     with h5py.File(f"{filename_bias}/Fisher_{i}.h5", "a") as f: #'a' mode for appending existing datasets.
                         f.create_dataset("Fisher_transformed", data=Fisher_transform)
 
@@ -491,7 +545,7 @@ if calculate_CV_biases:
                     
                     sef_kwargs['suffix'] = i
                 
-                    param_list = [M, mu, a, p0, e0, x0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
+                    param_list = [m1, m2, a, p0, e0, x0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
                 
                     sef = StableEMRIFisher(*param_list, **emri_kwargs, **sef_kwargs)
                     rho = sef.SNRcalc_SEF()
@@ -528,9 +582,9 @@ if calculate_CV_biases:
                     #Jacobian transform to log-masses
                     for k in range(sef.npar):
                         if sef.param_names[k] == 'M':
-                            dtv[k] *= M #to obtain \partial_{log M}h
+                            dtv[k] *= m1 #to obtain \partial_{log m1}h
                         elif sef.param_names[k] == 'mu':
-                            dtv[k] *= mu #to obtain \partial_{log mu}h
+                            dtv[k] *= m2 #to obtain \partial_{log m2}h
                             
                     with h5py.File(f"{filename_bias}/derivatives_{i}.h5", "w") as f:
                         f.create_dataset("derivatives", data=dtv)
@@ -544,18 +598,19 @@ if calculate_CV_biases:
             p0 = p_range[i]
             dist = dist_range[i]
             
-            params_truth = [M, mu, a, p0, e0, x0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
+            params_truth = [m1, m2, a, p0, e0, x0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
             
-            params_truth_in = np.array([M, mu, a, p0, e0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_r0]) #params from which Fisher is calculated.
-            params_truth_in_transformed = np.array([np.log(M), np.log(mu), a, p0, e0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_r0]) #params from which the transformed Fisher is calculated.
+            params_truth_in = np.array([m1, m2, a, p0, e0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_r0]) #params from which Fisher is calculated.
+            params_truth_in_transformed = np.array([np.log(m1), np.log(m2), a, p0, e0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_r0]) #params from which the transformed Fisher is calculated.
             
             #import the Fisher matrix
             with h5py.File(f"{filename_bias}/Fisher_{i}.h5", "r") as f:
                 Fisher_transformed = f["Fisher_transformed"][:]
             
             try:
-                with h5py.File(f"{filename_bias}/biased_params_{i}.h5","r") as f:
-                    biased_params = f["biased_params"][:]
+                raise FileNotFoundError
+                #with h5py.File(f"{filename_bias}/biased_params_{i}.h5","r") as f:
+                #    biased_params = f["biased_params"][:]
             except FileNotFoundError:
                 sef = StableEMRIFisher(*params_truth, **emri_kwargs, **sef_kwargs)
                 rho = sef.SNRcalc_SEF() #generates the PSD and the approximate waveform
@@ -578,6 +633,10 @@ if calculate_CV_biases:
                     Fisher_transformed = np.delete(np.delete(Fisher_transformed,rows_to_remove,axis=0),rows_to_remove,axis=1)
                     partial_approx = np.delete(partial_approx, rows_to_remove, axis=0)
                     params_truth_in_transformed = np.delete(params_truth_in_transformed, rows_to_remove, axis=0)
+        
+                #print(partial_approx[0][0][20000:40000])
+                #print(partial_approx[0][1][20000:40000])
+                #print(partial_approx[0][2][20000:40000])
                 
                 #calculate the waveform using the full template
                 waveform_truth = EMRI_TDI(*params_truth, **emri_kwargs)
@@ -605,323 +664,4 @@ if calculate_CV_biases:
             with h5py.File(f"{filename_bias}/biased_params_{i}.h5", "a") as f: #"a" for appending datapoints/
                 f.create_dataset("sigma_contours", data=sigma_contour) #in log-masses!!!
                 
-import matplotlib.colors as mcolors
-import matplotlib.tri as tri
 
-models_to_include = [0] #index of models from alternate_models_list to plot
-
-alternate_models_list = np.array([
-    'l2FastKerr',
-    'l2m2FastKerr',
-    'errtolFastKerr',
-    'errtol3FastKerr',
-    'errtol4FastKerr',
-    'Pn5AAKWaveform'])
-alternate_models_list = alternate_models_list[models_to_include]
-
-alternate_models_list_plotting = np.array([
-    r'FastKerr $\ell=2$',
-    r'FastKerr $\ell=2,m=2$',
-    r'FastKerr err=$10^{-2}$',
-    r'FastKerr err=$10^{-3}$',
-    r'FastKerr err=$10^{-4}$',
-    'PN5AAK'])
-alternate_models_list_plotting = alternate_models_list_plotting[models_to_include]
-
-histtype = np.array([
-    'bar',
-    'step',
-    'stepfilled',
-    'stepfilled',
-    'stepfilled',
-    'stepfilled'])
-histtype = histtype[models_to_include]
-
-histcolor = np.array([
-    'royalblue',
-    'royalblue',
-    'grey',
-    'royalblue',
-    'grey',
-    'orange'])
-histcolor = histcolor[models_to_include]
-
-alphas = np.array([
-    1.0,
-    1.0,
-    0.8,
-    0.8,
-    0.8,
-    0.6])
-alphas = alphas[models_to_include]
-
-edgecolor = np.array([
-    None, 
-    'royalblue',
-    'black', 
-    'black', 
-    'black', 
-    'red'])
-edgecolor = edgecolor[models_to_include]
-
-for j in range(len(alternate_models_list)):
-
-    alternate_model = alternate_models_list[j]
-    alt_plot = alternate_models_list_plotting[j]
-    
-    with h5py.File(f"{filename}/data.h5", "r") as f:
-        param_grid = f["gridpoints"][:]  # Read the dataset into a NumPy array
-        p_range = f["p0"][:] + 0.5 #buffer
-
-    filename_bias = os.path.join(filename,alternate_model)
-
-    sigma_contours = []
-    biased_a = []
-    biased_e = []
-    biases_1D = []
-    for i in range(len(param_grid)):
-        a = param_grid[i][0]
-        e0 = param_grid[i][1]
-        p0 = p_range[i]
-        dist = dist_range[i]
-        
-        param_vals = [np.log(M), np.log(mu), a, p0, e0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_r0]
-
-        with h5py.File(f"{filename_bias}/Fisher_{i}.h5", "r") as f:
-            Fisher_transformed = f["Fisher_transformed"][:]
-
-        with h5py.File(f"{filename_bias}/biased_params_{i}.h5","r") as f:
-            biased_params = f["biased_params"][:]
-            biased_a.append(biased_params[2])
-            biased_e.append(biased_params[4])
-            
-            sigma_contours.append(np.array(f["sigma_contours"]))
-
-        #rows_to_remove = []
-        #for _ in range(len(param_names)):
-        #    if param_names[_] in ['dist','qK','phiK']:
-        #        rows_to_remove.append(_)
-
-        #rows_to_remove = np.array(rows_to_remove)
-
-        #if len(rows_to_remove) > 0:
-        #    Fisher_transformed = np.delete(np.delete(Fisher_transformed,rows_to_remove,axis=0),rows_to_remove,axis=1)
-        #    biased_params = np.delete(biased_params, rows_to_remove, axis=0)
-        #    param_vals = np.delete(param_vals, rows_to_remove, axis=0)
-
-        covariance = np.linalg.inv(Fisher_transformed)
-
-    sigma_contours = np.array(sigma_contours) 
-
-    if M < 1e6: #high-frequency FIMs more unstable
-        mask = np.log10(sigma_contours) < 0.0 #set empirically
-    else: 
-        mask = np.log10(sigma_contours) < 3 #sigma > 1000.0 not expected!
-    
-    sigma_contours = sigma_contours[mask]
-    
-    a_vals_temp = param_grid[:,0][mask]
-    e_vals_temp = param_grid[:,1][mask]
-
-    param_grid = np.vstack((a_vals_temp,e_vals_temp)).T
-    
-    plt.plot(figsize=(7,5))
-    
-    x, y = param_grid[:, 0], param_grid[:, 1]
-
-    # Create a triangulation
-    triang = tri.Triangulation(x, y)
-
-    plt.tricontourf(triang, sigma_contours, cmap='inferno',levels=15)
-    #plt.scatter(param_grid[:,0], param_grid[:,1], c = biases_1D, cmap='inferno')
-    plt.scatter(param_grid[:,0], param_grid[:,1], c = sigma_contours, cmap='inferno',edgecolor='black')
-
-    scat_cb = plt.colorbar()
-    scat_cb.set_label(r"${{\sigma}}$",fontsize=20)
-
-    plt.xlabel(r"$a$",fontsize=20)
-    plt.ylabel(r"$e_0$",fontsize=20)    
-    plt.title(f"recovery: {alt_plot}",fontsize=18)
-    plt.savefig(f"{filename}/{alternate_model}_sigma_contours.png",bbox_inches='tight',dpi=300)
-    plt.show()
-
-
-for j in range(len(alternate_models_list)):
-
-    with h5py.File(f"{filename}/data.h5", "r") as f:
-        param_grid = f["gridpoints"][:]  # Read the dataset into a NumPy array
-        p_range = f["p0"][:] + 0.5 #buffer
-
-    alternate_model = alternate_models_list[j]
-    alt_plot = alternate_models_list_plotting[j]
-    
-    filename_bias = os.path.join(filename,alternate_model)
-
-    sigma_contours = []
-    
-    for i in range(len(param_grid)):
-        
-        with h5py.File(f"{filename_bias}/biased_params_{i}.h5","r") as f:
-            
-            sigma_contours.append(np.array(f["sigma_contours"]))
-
-    sigma_contours = np.array(sigma_contours)
-
-    sigma_contours = sigma_contours[mask]
-    #mask defined in previous loop
-    
-    sigma_contours = np.log10(np.array(sigma_contours))
-    #biases_1D = np.log10(biases_1D)
-    
-    plt.hist(sigma_contours,bins=20,histtype=histtype[j],color=histcolor[j],label=alt_plot,alpha=alphas[j],edgecolor=edgecolor[j])
-    
-#plt.yscale('log')
-plt.axvline(np.log10(1),color='black',linestyle='-',linewidth=1.5,label=r'$1\sigma$ contour')
-plt.xlabel(r"$\log_{10}{\sigma}$",fontsize=16)
-plt.legend(fontsize=14)
-plt.savefig(f"{filename}/histplot_sigmas.png",dpi=300,bbox_inches='tight')
-plt.show()
-
-models_to_include = [0] #index of models from alternate_models_list to plot
-
-alternate_models_list = np.array([
-'l2FastKerr',
-'l2m2FastKerr',
-'errtolFastKerr',
-'Pn5AAKWaveform'
-])
-alternate_models_list = alternate_models_list[models_to_include]
-
-alternate_models_list_plotting = np.array([
-r'FastKerr $\ell=2$',
-r'FastKerr $\ell=2,m=2$',
-r'FastKerr err=$10^{-2}$',
-'PN5AAK'
-])
-alternate_models_list_plotting = alternate_models_list_plotting[models_to_include]
-
-histtype = np.array([
-'stepfilled',
-'step',
-'stepfilled',
-'stepfilled'
-])
-histtype = histtype[models_to_include]
-
-histcolor = np.array([
-'royalblue',
-'royalblue',
-'grey',
-'orange'
-])
-histcolor = histcolor[models_to_include]
-
-alphas = np.array([
-0.8,
-1.0,
-0.8,
-0.6
-])
-alphas = alphas[models_to_include]
-
-edgecolor = np.array([
-'black', 
-'royalblue',
-'black', 
-'red'
-])
-edgecolor = edgecolor[models_to_include]
-
-medianline_color = np.array([
-'royalblue',
-'royalblue',
-'black',
-'red'
-])
-medianline_color = medianline_color[models_to_include]
-
-medianline_style = np.array([
-'--',
-'-',
-'--',
-'--'
-])
-medianline_style = medianline_style[models_to_include]
-
-param_names = [r'$\log{M}$',r'$\log{\mu}$',r'$a$',r'$p_0$',r'$e_0$',r'$D_L$',r'$\theta_S$',r'$\phi_S$',r'$\theta_K$',r'$\phi_K$',r'$\Phi_{\phi_0}$',r'$\Phi_{r_0}$']
-
-fig, axs = plt.subplots(2,len(param_names)//2,figsize=(20,10),sharey=True, gridspec_kw={'wspace': 0})
-
-for j in range(len(alternate_models_list)):
-
-    alternate_model = alternate_models_list[j]
-    alt_plot = alternate_models_list_plotting[j]
-
-    with h5py.File(f"{filename}/data.h5", "r") as f:
-        param_grid = f["gridpoints"][:]  # Read the dataset into a NumPy array
-        p_range = f["p0"][:] + 0.5 #buffer
-        dist_range = f["dists"][:]  # Read the dataset into a NumPy array
-
-    a_range = np.linspace(0.1,0.9,N)
-    e_range = np.linspace(0.1,0.5,N) #eccentricity above 0.5 is extremely expensive already...
-
-    filename_bias = os.path.join(filename,alternate_model)
-
-    sigma_contours = []
-    biases_1D = []
-    sigmas_1D = []
-    truevals_1D = []
-    for i in range(len(param_grid)):
-        a = param_grid[i][0]
-        e0 = param_grid[i][1]
-        p0 = p_range[i]
-        dist = dist_range[i]
-        
-        truevals_1D.append([np.log(M), np.log(mu), a, p0, e0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_r0])
-
-        with h5py.File(f"{filename_bias}/Fisher_{i}.h5", "r") as f:
-            Fisher_transformed = f["Fisher_transformed"][:]
-
-        covariance_transformed = np.linalg.inv(Fisher_transformed)
-
-        sigmas_1D.append(np.sqrt(np.diag(covariance_transformed)))
-
-        with h5py.File(f"{filename_bias}/biased_params_{i}.h5","r") as f:
-            biased_params = f["biased_params"][:]
-            #sigma_contours.append(np.array(f["sigma_contours"]))
-
-        biases_1D.append(biased_params)
-
-    biases_1D = np.array(biases_1D)
-    sigmas_1D = np.array(sigmas_1D)
-    truevals_1D = np.array(truevals_1D)
-
-    sigmabias_1D = np.abs(biases_1D - truevals_1D)/sigmas_1D
-
-    #mask = (sigmabias_1D[:,2] < 1) & (sigmabias_1D[:,5] < 10) & (sigmabias_1D[:,4] < 2) & (sigmabias_1D[:,-2] < 1) & (sigmabias_1D[:,-1] < 1) & (sigmabias_1D[:,6] < 1) 
-    #mask = (sigmabias_1D[:,2] < 1) & (sigmabias_1D[:,4] < 2) & (sigmabias_1D[:,6] < 1.25) #empirical mask 
-    
-    #sigmabias_1D = sigmabias_1D[mask]
-
-    #print("#excluded points: ", sum(~mask))
-
-    for i in range(len(param_names)):
-        if i < len(param_names)//2:
-            axs[0,i].hist(sigmabias_1D[:,i],histtype=histtype[j],color=histcolor[j],alpha=alphas[j],edgecolor=edgecolor[j])
-            axs[0,i].set_xlabel(r"$\sigma($" + rf"{param_names[i]})",fontsize=16)
-            axs[0,i].set_yscale('log')
-        else:
-            axs[1,i-len(param_names)//2].hist(sigmabias_1D[:,i],histtype=histtype[j],color=histcolor[j],alpha=alphas[j],edgecolor=edgecolor[j])
-            axs[1,i-len(param_names)//2].set_xlabel(r"$\sigma($" + rf"{param_names[i]})",fontsize=16)
-            axs[1,i-len(param_names)//2].set_yscale('log')
-
-        if i < len(param_names)//2:
-            axs[0,i].axvline(np.median(sigmabias_1D[:,i]),linestyle=medianline_style[j],color=medianline_color[j],label=round(np.median(sigmabias_1D[:,i]), 2))
-            axs[0,i].legend(fontsize=14)
-        else:
-            axs[1,i-len(param_names)//2].axvline(np.median(sigmabias_1D[:,i]),linestyle=medianline_style[j],color=medianline_color[j],label=round(np.median(sigmabias_1D[:,i]), 2))
-            axs[1,i-len(param_names)//2].legend(fontsize=14)
-
-fig.legend(labels = np.vstack((alternate_models_list_plotting,alternate_models_list_plotting)).ravel('F'), loc="upper center", bbox_to_anchor=(0.5, 0.99), ncol=2,fontsize=16)
-plt.savefig(f"{filename}/1D_bias_comparison.png",dpi=300,bbox_inches='tight',transparent=False)
-plt.show()
