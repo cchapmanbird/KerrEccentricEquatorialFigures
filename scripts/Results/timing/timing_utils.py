@@ -115,7 +115,7 @@ def gen_parameters(
 
             updated_params[3] = get_p_at_t(
                 traj_module,
-                duration * 0.99,
+                duration,
                 [
                     updated_params[0],
                     updated_params[1],
@@ -128,8 +128,8 @@ def gen_parameters(
                 index_of_e=4,
                 index_of_x=5,
                 traj_kwargs={},
-                xtol=2e-6,
-                rtol=8.881784197001252e-6,
+                xtol=1e-10,
+                rtol=1e-6,
             )
 
             output_params_list.append(updated_params.copy())
@@ -198,6 +198,7 @@ def time_full_waveform_generation(
                 wvf_kwargs = waveform_kwargs_base.copy()
                 wvf_kwargs.update({"dt": dt, "mode_selection_threshold": eps})
                 # run things once to cache, this will sometimes take a few seconds
+                print(wvf_kwargs)
                 fd_waveform_func(*input_params[0], **wvf_kwargs)
                 td_waveform_func(*input_params[0], **wvf_kwargs)
                 
@@ -219,6 +220,7 @@ def time_full_waveform_generation(
 
                 td_time = (td_end_time - td_start_time) / iterations
                 
+                print(f"FD time: {fd_time}, TD time: {td_time}, ratio TD/FD: {td_time/fd_time}")
                 # transform td to fd
                 from scipy.signal.windows import hann, tukey
                 from few.utils.fdutils import get_fft_td_windowed, get_fd_windowed

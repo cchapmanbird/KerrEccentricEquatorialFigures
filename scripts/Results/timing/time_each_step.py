@@ -740,11 +740,11 @@ class TimingWaveform(
 T = 4.0  # years
 dt = 5.0  # seconds
 t_vec = np.arange(0, T * 366 * 24 * 3600, dt)
-M = 1e6
+M = 1e7
 mu = 10.
 a = 0.9
 traj_module = EMRIInspiral(func=KerrEccEqFlux)
-e0 = 0.1
+e0 = 0.6
 p0 = get_p_at_t(
                 traj_module,
                 T * 0.9999,
@@ -780,7 +780,7 @@ import matplotlib.pyplot as plt
 for outtype in ["fd", "td"]:
     print("------------------------")
     print("output type", outtype)
-    wave_timing = TimingWaveform(sum_kwargs={"output_type": outtype})#inspiral_kwargs={"err": 1e-8})
+    wave_timing = TimingWaveform(sum_kwargs={"output_type": outtype, "pad_output": True, "odd_len":True})#inspiral_kwargs={"err": 1e-8})
 
     trajectory_time, amplitude_time, summation_time, wave = wave_timing(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, mode_selection_threshold=1e-5)
     
@@ -799,32 +799,59 @@ for outtype in ["fd", "td"]:
         plt.figure(); plt.plot(t_vec[:wave.size]/86400, wave.real.get()); plt.savefig("waveform.png")
 
 
-# import json
-# with open("lakshmi_timing_4.0yrInspErrDefault.json", "r") as f:
-#     test_timing = json.load(f)
+import json
+with open("lakshmi_timing_4.0yrInspErrDefault.json", "r") as f:
+    test_timing = json.load(f)
 
-# for el in test_timing[:10]:
-#     print("*******************************")
-#     M = el["parameters"]["mass_1"] 
-#     mu = el["parameters"]["mass_2"]
-#     a = el["parameters"]["spin"]
-#     p0 = el["parameters"]["p0"]
-#     e0 = el["parameters"]["e0"]
-#     print(el["timing_results"][1]["fd_timing"], el["timing_results"][1]["td_timing"])
-#     for outtype in ["fd", "td"]:
-#         print("------------------------")
-#         print("output type", outtype)
-#         wave_timing = TimingWaveform(sum_kwargs={"output_type": outtype})#inspiral_kwargs={"err": 1e-8})
+for el in test_timing:
+    
+    M = el["parameters"]["mass_1"] 
+    if M < 0.9e7:
+        continue
+    mu = el["parameters"]["mass_2"]
+    if mu/M > 5e-6:
+        continue
+    print("M", M, "mu", mu, "mu/M", mu/M)
+    a = el["parameters"]["spin"]
+    p0 = el["parameters"]["p0"]
+    e0 = el["parameters"]["e0"]
+    if e0< 0.1:
+        continue
+    print("*******************************")
+    p0_test = get_p_at_t(
+                traj_module,
+                T * 0.99,
+                [
+                    M,
+                    mu,
+                    a,
+                    e0,
+                    1.0,
+                ],
+                index_of_a=2,
+                index_of_p=3,
+                index_of_e=4,
+                index_of_x=5,
+                traj_kwargs={},
+                xtol=1e-10,
+                rtol=1e-10,
+            )
+    print("p0", p0, "p0_test", p0_test)
+    print("fd",el["timing_results"][1]["fd_timing"], "td", el["timing_results"][1]["td_timing"])
+    for outtype in ["fd", "td"]:
+        print("------------------------")
+        print("output type", outtype)
+        wave_timing = TimingWaveform(sum_kwargs={"output_type": outtype})#inspiral_kwargs={"err": 1e-8})
 
-#         trajectory_time, amplitude_time, summation_time, wave = wave_timing(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, mode_selection_threshold=1e-5)
+        trajectory_time, amplitude_time, summation_time, wave = wave_timing(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, mode_selection_threshold=1e-5)
         
-#         print("Now actual timing")
-#         tic = time.perf_counter()
-#         trajectory_time, amplitude_time, summation_time, wave = wave_timing(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, mode_selection_threshold=1e-5)
-#         toc = time.perf_counter()
-#         # Save speed and percentage information to a markdown file
-#         print(f"## Output type: {outtype}\n")
-#         print(f"- **Total speed:** {toc - tic:.6f} s (sum: {trajectory_time + amplitude_time + summation_time:.6f} s)\n")
-#         print(f"- **Trajectory speed:** {trajectory_time:.6f} s ({trajectory_time/(toc - tic)*100:.2f}%)\n")
-#         print(f"- **Amplitude speed:** {amplitude_time:.6f} s ({amplitude_time/(toc - tic)*100:.2f}%)\n")
-#         print(f"- **Summation speed:** {summation_time:.6f} s ({summation_time/(toc - tic)*100:.2f}%)\n\n")
+        print("Now actual timing")
+        tic = time.perf_counter()
+        trajectory_time, amplitude_time, summation_time, wave = wave_timing(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, mode_selection_threshold=1e-5)
+        toc = time.perf_counter()
+        # Save speed and percentage information to a markdown file
+        print(f"## Output type: {outtype}\n")
+        print(f"- **Total speed:** {toc - tic:.6f} s (sum: {trajectory_time + amplitude_time + summation_time:.6f} s)\n")
+        # print(f"- **Trajectory speed:** {trajectory_time:.6f} s ({trajectory_time/(toc - tic)*100:.2f}%)\n")
+        # print(f"- **Amplitude speed:** {amplitude_time:.6f} s ({amplitude_time/(toc - tic)*100:.2f}%)\n")
+        # print(f"- **Summation speed:** {summation_time:.6f} s ({summation_time/(toc - tic)*100:.2f}%)\n\n")

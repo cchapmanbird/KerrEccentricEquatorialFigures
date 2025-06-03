@@ -203,26 +203,26 @@ if __name__ == "__main__":
         logging.info(f"Generating {args.nsamples} parameters with seed {args.seed}.")
         from timing_utils import gen_parameters
 
-        parameter_list = np.loadtxt(f"timing_parameter_list_seed314159_nsamples10000.txt", delimiter=",", dtype=float)
-        parameter_list = parameter_list[:args.nsamples]
+        # parameter_list = np.loadtxt(f"timing_parameter_list_seed314159_nsamples10000.txt", delimiter=",", dtype=float)
+        # parameter_list = parameter_list[:args.nsamples]
         # check if list par exists
-        # parameter_list, flist = gen_parameters(
-        #     args.nsamples, duration, seed_in=args.seed, verbose=args.verbose
-        # )
-        # # save parameter list and flist to file
-        # np.savetxt(
-        #     list_par
-        #     np.asarray(parameter_list),
-        #     fmt="%s",
-        #     delimiter=",",
-        #     header="mass_1, mass_2, spin, p0, e0, x0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0",
-        # )
-        # np.savetxt(
-        #     f"timing_flist_seed{args.seed}_nsamples{args.nsamples}.txt",
-        #     np.asarray(flist),
-        #     fmt="%s",
-        #     delimiter=",",
-        # )
+        parameter_list, flist = gen_parameters(
+            args.nsamples, duration, seed_in=args.seed, verbose=args.verbose
+        )
+        # save parameter list and flist to file
+        np.savetxt(
+            f"timing_parameter_list_seed{args.seed}_nsamples{args.nsamples}.txt",
+            np.asarray(parameter_list),
+            fmt="%s",
+            delimiter=",",
+            header="mass_1, mass_2, spin, p0, e0, x0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0",
+        )
+        np.savetxt(
+            f"timing_flist_seed{args.seed}_nsamples{args.nsamples}.txt",
+            np.asarray(flist),
+            fmt="%s",
+            delimiter=",",
+        )
         logging.info(f"Done with generating {args.nsamples} parameters with seed {args.seed}.")
 
     else:
