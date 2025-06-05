@@ -30,20 +30,20 @@ for name in ["SchwarzEccFlux", "PN5"]:
     contourf1 = ax1.contourf(ps, es, pdotsRelDiffLoaded, cmap='plasma', levels=levels, vmin=vmin, vmax=vmax)
     ax1.set_xlabel(r'Semilatus rectum $(p)$', fontsize=label_fontsize)
     ax1.set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
-    ax1.set_title(rf'$ \log_{{10}} \left(| 1 - \hat{{f}}_p^{{0PA}}/ \hat{{f}}_p^{{{name}}} | \right)$', fontsize=title_fontsize)
 
     ax1.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
     contourf2 = ax2.contourf(ps, es, edotsRelDiffLoaded, cmap='plasma', levels=levels, vmin=vmin, vmax=vmax)
     ax2.set_xlabel(r'Semilatus rectum $(p)$', fontsize=label_fontsize)
     ax2.set_ylabel(r'Eccentricity $(e)$', fontsize=label_fontsize)
-    ax2.set_title(rf'$ \log_{{10}} \left(| 1 - \hat{{f}}_e^{{0PA}}/ \hat{{f}}_e^{{{name}}} | \right)$', fontsize=title_fontsize)
     ax2.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
     cbar = fig.colorbar(contourf1, ax=ax1, orientation='vertical', fraction=0.2, pad=0.01, ticks=level_list)
     cbar.ax.tick_params(labelsize=tick_fontsize)
+    cbar.set_label(rf'$ \log_{{10}} \left| 1 - \hat{{f}}_p^{{0PA}}/ \hat{{f}}_p^{{{name}}} \right| $', fontsize=14)
     cbar = fig.colorbar(contourf2, ax=ax2, orientation='vertical', fraction=0.2, pad=0.01, ticks=level_list)
     cbar.ax.tick_params(labelsize=tick_fontsize)
+    cbar.set_label(rf'$ \log_{{10}} \left| 1 - \hat{{f}}_e^{{0PA}}/ \hat{{f}}_e^{{{name}}} \right|$', fontsize=14)
 
     plt.tight_layout()
     plt.savefig(f"{name}_Comparison.pdf")
