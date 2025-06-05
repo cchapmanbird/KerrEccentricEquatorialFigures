@@ -1,3 +1,7 @@
+#!/data/lsperi/miniconda3/envs/few_env/bin/python
+"""
+This script runs a timing test for the FastEMRIWaveforms package.
+"""
 import numpy as np
 import sys
 import os
@@ -25,7 +29,7 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--delta-t",
+        "--delta_t",
         help="Turn on iteration over sample rate",
         action="store_true",
         default=False,
@@ -61,14 +65,14 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-l",
-        "--logging-output",
+        "--logging_output",
         help="filename for logging output",
         type=str,
         default="timing_output",
     )
     parser.add_argument(
         "-g",
-        "--generate-parameters",
+        "--generate_parameters",
         help="flag to generate random seed parameters for test",
         action="store_true",
         default=False,
@@ -120,9 +124,11 @@ if __name__ == "__main__":
     traj_module = EMRIInspiral(func=KerrEccEqFlux)
 
     # Initialize waveform generators
+    error_inspiral = "Default_iterations" + str(args.iterations) #1e-1
     # frequency domain
     few_gen = GenerateEMRIWaveform(
         "FastKerrEccentricEquatorialFlux",
+        # inspiral_kwargs=dict(err=error_inspiral),
         sum_kwargs=dict(pad_output=True, output_type="fd", odd_len=True),
         return_list=True,
     )
@@ -130,9 +136,12 @@ if __name__ == "__main__":
     # time domain
     td_gen = GenerateEMRIWaveform(
         "FastKerrEccentricEquatorialFlux",
+        # inspiral_kwargs=dict(err=error_inspiral),
         sum_kwargs=dict(pad_output=True, odd_len=True),
         return_list=True,
     )
+
+    output_filename = args.filename + f"InspErr{error_inspiral}" +".json"
 
     # define the injection parameters
     mass_1 = 0.5e6  # central object mass
@@ -152,6 +161,8 @@ if __name__ == "__main__":
     Phi_theta0 = 0.0
     Phi_r0 = np.pi / 3
 
+    buffer = 1.0  # buffer for trajectory with inspiral duration
+
     emri_injection_params = [
         mass_1,
         mass_2,
@@ -170,7 +181,7 @@ if __name__ == "__main__":
     ]
     emri_injection_params[3] = get_p_at_t(
         traj_module,
-        duration * 0.99,  # buffer for... reasons?
+        duration * buffer,  # buffer for... reasons?
         [
             emri_injection_params[0],
             emri_injection_params[1],
@@ -192,9 +203,28 @@ if __name__ == "__main__":
         logging.info(f"Generating {args.nsamples} parameters with seed {args.seed}.")
         from timing_utils import gen_parameters
 
+        # parameter_list = np.loadtxt(f"timing_parameter_list_seed314159_nsamples10000.txt", delimiter=",", dtype=float)
+        # parameter_list = parameter_list[:args.nsamples]
+        # check if list par exists
         parameter_list, flist = gen_parameters(
             args.nsamples, duration, seed_in=args.seed, verbose=args.verbose
         )
+        # save parameter list and flist to file
+        np.savetxt(
+            f"timing_parameter_list_seed{args.seed}_nsamples{args.nsamples}.txt",
+            np.asarray(parameter_list),
+            fmt="%s",
+            delimiter=",",
+            header="mass_1, mass_2, spin, p0, e0, x0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0",
+        )
+        np.savetxt(
+            f"timing_flist_seed{args.seed}_nsamples{args.nsamples}.txt",
+            np.asarray(flist),
+            fmt="%s",
+            delimiter=",",
+        )
+        logging.info(f"Done with generating {args.nsamples} parameters with seed {args.seed}.")
+
     else:
         logging.info("Running with default parameters.")
         parameter_list = []
@@ -207,7 +237,7 @@ if __name__ == "__main__":
                 temp[4] = ecc
                 temp[3] = get_p_at_t(
                     traj_module,
-                    duration * 0.99,
+                    duration * buffer,
                     [temp[0], temp[1], temp[2], temp[4], 1.0],
                     index_of_a=2,
                     index_of_p=3,
@@ -221,8 +251,8 @@ if __name__ == "__main__":
 
     waveform_kwargs_base = {
         "T": duration,
-        "dt": 10.0,
-        "eps": 1e-2,
+        "dt": 5.0,
+        "mode_selection_threshold": 1e-2,
     }
 
     if args.delta_t:
@@ -244,6 +274,7 @@ if __name__ == "__main__":
         verbose=args.verbose,
         vary_delta_t=args.delta_t,
         vary_epsilon=args.epsilon,
+        duration=duration,
     )
 
     logging.info(f"Outputing results to {output_filename}.")
