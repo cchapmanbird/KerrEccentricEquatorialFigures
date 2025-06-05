@@ -25,7 +25,7 @@ for k in range(3):
 
     pcm = ax[k].pcolormesh(P0, E0, delta_phi_values, shading='auto', cmap=cmap, norm=LogNorm(vmin=1e-5, vmax=1e5), rasterized=True)
     plunge_contour = ax[k].contour(P0, E0, plunge_mask, levels=[0.5], colors='blue', linewidths=1, linestyles='dashed')
-    ax[k].clabel(plunge_contour, fmt={0.5: "\u00A0Plunge\u00A0"}, colors='blue', fontsize=14, inline_spacing=40)
+    ax[k].clabel(plunge_contour, fmt={0.5: "\u00A0Plunging\u00A0"}, colors='blue', fontsize=14, inline_spacing=40)
 
     contour_levels = [0.01, 0.1, 1]
     contours = ax[k].contour(P0, E0, delta_phi_values, levels=contour_levels, colors='white', linewidths=1, linestyles='dashed')
