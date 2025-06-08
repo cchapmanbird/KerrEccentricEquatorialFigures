@@ -41,7 +41,7 @@ vmax = 3#e-24
 # vmax = 1.5e-23
 
 plt.rcParams['figure.constrained_layout.use'] = True
-fig =plt.figure(figsize=(10, 7), dpi=200)
+fig =plt.figure(figsize=(11, 7), dpi=200)
 plt.subplot(2, 2, 1)
 
 fr = np.fft.rfftfreq(len(wave_plot), d=dt)
@@ -96,8 +96,8 @@ cb.set_label(label=r'Waveform strain ($\times 10^{-24}$)', size=14)
 cb.ax.yaxis.get_offset_text().set_fontsize(13)
 
 plt.subplot(2, 2, 3)
-plt.plot(t_all, wave_plot.real, c=cpal[0])
-plt.xlim(0, 43200)
+plt.plot(t_all - 1800, wave_plot.real, c=cpal[0])
+plt.xlim(0, 10000)
 # plt.ylim(-1.5e-21, 1.5e-21)
 plt.ylim(-7e-22, 7e-22)
 plt.tick_params(axis='both', which='major', labelsize=14)
