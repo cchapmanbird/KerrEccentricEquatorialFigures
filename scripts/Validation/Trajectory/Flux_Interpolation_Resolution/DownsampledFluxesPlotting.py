@@ -18,7 +18,7 @@ dephasings = np.loadtxt('DownsampledFluxesData.txt')
 
 extrapolated = np.array([np.polynomial.Polynomial.fit([1, 2, 3], dephasings[i,:3], deg=1)(0) for i in range(dephasings.shape[0])])
 # Plot Historgrams of Dephasings when downsampling by 2, 4, and 8
-bins1 = np.arange(-7,4.,0.25)
+bins1 = np.arange(-6.75,3.5,0.25)
 plt.figure()
 plt.hist(dephasings[:,0], bins=bins1, histtype='stepfilled', facecolor='none', edgecolor=colorblind_hex[0], linewidth=2, label="1/2 grid points")
 plt.hist(dephasings[:,1], bins=bins1, histtype='stepfilled',facecolor='none', edgecolor=colorblind_hex[1], linewidth=2, label="1/4 grid points")
@@ -44,7 +44,7 @@ plt.savefig("DownsampledFluxesHistogram1.pdf")
 
 
 # Plot Historgrams of Dephasings when downsampling in u, w, and z
-bins2 = np.arange(-7,4,0.25)
+bins2 = np.arange(-6.75,3.5,0.25)
 plt.figure()
 plt.hist(dephasings[:,3], bins=bins2, histtype='stepfilled', facecolor='none', edgecolor=colorblind_hex[0], linewidth=2, label="downsample in $u$")
 plt.hist(dephasings[:,4], bins=bins2, histtype='stepfilled',facecolor='none', edgecolor=colorblind_hex[1], linewidth=2, label="downsample in $w$")
@@ -69,7 +69,7 @@ plt.legend()
 plt.savefig("DownsampledFluxesHistogram2.pdf")
 
 # Plot both histograms together
-fig, axs = plt.subplots(2, 1, figsize=(5, 7))  # Create 2x1 subplots
+fig, axs = plt.subplots(2, 1, figsize=(4, 5))  # Create 2x1 subplots
 ax1 = axs[0]
 ax2 = axs[1]
 
@@ -93,9 +93,9 @@ ax1.tick_params(axis='x', labelbottom=False)
 
 ax1.set_ylabel("Count")
 #plt.title("Dephasing after 4 years as a function of downsampling factor")
-ax1.legend()
+ax1.legend(ncols=2, loc = 'upper right', frameon=False, bbox_to_anchor=(1, 1.3))
 
-bins2 = np.arange(-7,4,0.25)
+bins2 = np.arange(-7,3.5,0.25)
 
 ax2.hist(dephasings[:,3], bins=bins2, histtype='stepfilled', facecolor='none', edgecolor=colorblind_hex[0], linewidth=2, label="2x downsample $u$")
 ax2.hist(dephasings[:,4], bins=bins2, histtype='stepfilled',facecolor='none', edgecolor=colorblind_hex[1], linewidth=2, label="2x downsample $w$")
@@ -115,12 +115,12 @@ ax2.axvline(median3, color=colorblind_hex[2], linestyle='dashed', linewidth=1.5)
 
 ax2.set_xlabel(r'$\log_{10}(\Delta \Phi_{\phi})$')
 ax2.set_ylabel("Count")
-ax2.legend()
+ax2.legend(frameon=False)
 
 
 plt.tight_layout()
 plt.savefig('DownsampledFluxesHistogramCombined.pdf', bbox_inches='tight')
-plt.show()
+# plt.show()
 
 
 
