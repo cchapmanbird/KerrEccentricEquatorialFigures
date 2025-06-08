@@ -20,9 +20,9 @@ plt.rcParams["font.serif"] = ["Computer Modern"]
 plt.rcParams["mathtext.fontset"] = "dejavuserif"
 
 # %%
-fname = 'lakshmi_timing_4.0yrInspErrDefault.json'#"NEWtiming_4.0yrInspErrDefault_iterations10.json"#"lakshmi_timing_4.0yrInspErrDefault_iterations10.json"#
+fname = 'results/lakshmi_timing_4.0yrInspErrDefault.json'
 timing_data = json.load(open(fname, 'r'))
-fname = "results/" + fname[:-5]
+fname = "results/timing_"
 # %%
 def cast_results_to_dataframe(input_data):
     output = []
@@ -147,7 +147,7 @@ _min, _max = min([_min_fd, _min_td]), max([_max_fd, _max_td])
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 
-fig, ax = plt.subplots(1, 1, figsize=(5, 3))
+fig, ax = plt.subplots(1, 1, figsize=(5, 3.5))
 dt = 5.0
 shift_factor = 0.9  # Factor to slightly shift the bins for each histogram
 
@@ -169,7 +169,7 @@ for idx, (eps_val, pc) in enumerate(zip(kappa_vals, kappa_styles)):
     
     # Shift the bins slightly for each histogram
     fact = np.random.uniform(-0.01, 0.01) 
-    lb = np.logspace(np.log10(_min*(1-fact)), np.log10(_max*(1+fact)), 100)
+    lb = np.logspace(np.log10(_min*(1-fact)), np.log10(_max*(1+fact)), 50)
     
     td_hist = ax.hist(data_td, density=True, bins=lb, histtype='step', linestyle=pc, color=cpal[0])
     fd_hist = ax.hist(data_fd, density=True, bins=lb, histtype='step', linestyle=pc, color=cpal[1])
@@ -199,7 +199,7 @@ ax.set_ylabel('Density', fontsize=label_fontsize)
 ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
 # Custom legend: first for domain (color), then for kappa (linestyle)
-legend1 = ax.legend(handles=domain_handles + kappa_handles, loc='upper right', fontsize=label_fontsize, title_fontsize=label_fontsize, frameon=True)
+legend1 = ax.legend(handles=domain_handles + kappa_handles, loc='upper right', fontsize=label_fontsize, title_fontsize=label_fontsize, frameon=False)
 # legend2 = ax.legend(handles=kappa_handles, loc='upper center', fontsize=label_fontsize, title_fontsize=label_fontsize, frameon=True)
 ax.add_artist(legend1)
 
