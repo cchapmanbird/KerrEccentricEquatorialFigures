@@ -34,14 +34,14 @@ from eryn.moves import StretchMove
 from eryn.prior import ProbDistContainer, uniform_dist
 from eryn.backends import HDFBackend
 
-MAKE_PLOT = True
+MAKE_PLOT = False
 # Import parameters
-sys.path.append("/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/Results/config_files/")
+sys.path.append("/data/asantini/emris/eccentric_kerr/KerrEccentricEquatorialFigures/scripts/Results/config_files/")
 from PE_EMRI_params import (M, mu, a, p0, e0, x_I0, SNR_choice, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0, T, delta_t)
 from psd_utils import (write_psd_file, load_psd_from_file, load_psd)
 use_gpu = True
 
-run_direc = "/home/ad/burkeol/work/KerrEccentricEquatorialFigures/scripts/Results/PE_studies/mcmc_code/"
+run_direc = "/data/asantini/emris/eccentric_kerr/KerrEccentricEquatorialFigures/scripts/Results/PE_studies/mcmc_code/"
 YRSID_SI = 31558149.763545603
 
 np.random.seed(1234)
@@ -252,6 +252,28 @@ SNR_Kerr_FEW = SNR2_Kerr_FEW**(1/2)
 print(f"New distance is dist = {dist}, giving SNR = {SNR_Kerr_FEW}")
 print(f"At this value of distance, we find a redshift of z = {check_redshift}")
 
+# ================== MODE REDUCTION ===================
+params_normed = params_unnormed.copy()
+params_normed[6] = dist
+
+wf_1e5 = EMRI_TDI_Model(*params_normed, mode_selection_threshold = 1e-5)
+print("--------------------------------")
+print('Waveform with mode selection threshold = 1e-5')
+print(f'Total number of modes: {EMRI_TDI_Model.waveform_gen.waveform_generator.num_modes}')
+print(f'Number of modes kept: {EMRI_TDI_Model.waveform_gen.waveform_generator.num_modes_kept}')
+wf_1e3 = EMRI_TDI_Model(*params_normed, mode_selection_threshold = 1e-3)
+print("--------------------------------")
+print('Waveform with mode selection threshold = 1e-3')
+print(f'Total number of modes: {EMRI_TDI_Model.waveform_gen.waveform_generator.num_modes}')
+print(f'Number of modes kept: {EMRI_TDI_Model.waveform_gen.waveform_generator.num_modes_kept}')
+wf_1e2 = EMRI_TDI_Model(*params_normed, mode_selection_threshold = 1e-2)
+print("--------------------------------")
+print('Waveform with mode selection threshold = 1e-2')
+print(f'Total number of modes: {EMRI_TDI_Model.waveform_gen.waveform_generator.num_modes}')
+print(f'Number of modes kept: {EMRI_TDI_Model.waveform_gen.waveform_generator.num_modes_kept}')
+print("--------------------------------")
+
+quit()
 # ================== PLOT THE A CHANNEL ===================
 
 if MAKE_PLOT == True:
@@ -425,6 +447,8 @@ if Reset_Backend:
                             )
 else:
     start = backend.get_last_sample() # Start from last sample
+
+quit()
 out = ensemble.run_mcmc(start, iterations, progress=True)  # Run the sampler
 
 ##===========================MCMC Settings (change this)============================
