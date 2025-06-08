@@ -199,7 +199,7 @@ ax.set_ylabel('Density', fontsize=label_fontsize)
 ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
 # Custom legend: first for domain (color), then for kappa (linestyle)
-legend1 = ax.legend(handles=domain_handles + kappa_handles, loc='upper right', fontsize=label_fontsize, title_fontsize=label_fontsize, frameon=True)
+legend1 = ax.legend(handles=domain_handles + kappa_handles, loc='upper right', fontsize=label_fontsize, title_fontsize=label_fontsize, frameon=False)
 # legend2 = ax.legend(handles=kappa_handles, loc='upper center', fontsize=label_fontsize, title_fontsize=label_fontsize, frameon=True)
 ax.add_artist(legend1)
 
