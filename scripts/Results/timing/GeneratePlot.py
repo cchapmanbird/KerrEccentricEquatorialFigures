@@ -158,10 +158,11 @@ kappa_handles = []
 domain_labels = ["Time Domain", "Frequency Domain"]
 domain_colors = [cpal[0], cpal[1]]
 kappa_vals = [1e-2, 1e-5]
-kappa_styles = ['-', '--']
+kappa_styles = ['--', '-']
+kappa_widths = [1.5, 1.]
 kappa_labels = [r"$\kappa = 10^{-2}$", r"$\kappa = 10^{-5}$"]
 
-for idx, (eps_val, pc) in enumerate(zip(kappa_vals, kappa_styles)):
+for idx, (eps_val, pc, wd) in enumerate(zip(kappa_vals, kappa_styles, kappa_widths)):
     print(f"eps_val: {eps_val}")
     data_td = data_df[(data_df['mode_selection_threshold'] == eps_val) & (data_df['dt'] == dt)]['td_timing']
     data_fd = data_df[(data_df['mode_selection_threshold'] == eps_val) & (data_df['dt'] == dt)]['fd_timing']
@@ -171,8 +172,8 @@ for idx, (eps_val, pc) in enumerate(zip(kappa_vals, kappa_styles)):
     fact = np.random.uniform(-0.01, 0.01) 
     lb = np.logspace(np.log10(_min*(1-fact)), np.log10(_max*(1+fact)), 50)
     
-    td_hist = ax.hist(data_td, density=True, bins=lb, histtype='step', linestyle=pc, color=cpal[0])
-    fd_hist = ax.hist(data_fd, density=True, bins=lb, histtype='step', linestyle=pc, color=cpal[1])
+    td_hist = ax.hist(data_td, bins=lb, histtype='step', linestyle=pc, linewidth=wd, color=cpal[0])
+    fd_hist = ax.hist(data_fd, bins=lb, histtype='step', linestyle=pc, linewidth=wd, color=cpal[1])
     print(f"Median TD timing for eps={eps_val}: {np.median(data_td):.4f} s")
     print(f"Median FD timing for eps={eps_val}: {np.median(data_fd):.4f} s")
     # Find and print the parameters for the minimum and maximum TD and FD timings
@@ -191,20 +192,21 @@ for idx, (eps_val, pc) in enumerate(zip(kappa_vals, kappa_styles)):
         domain_handles.append(mpatches.Patch(color=cpal[0], label=domain_labels[0]))
         domain_handles.append(mpatches.Patch(color=cpal[1], label=domain_labels[1]))
     # Add line handle for kappa
-    kappa_handles.append(mlines.Line2D([], [], color='k', linestyle=pc, label=kappa_labels[idx]))
+    kappa_handles.append(mlines.Line2D([], [], color='k', linestyle=pc, label=kappa_labels[idx], linewidth=wd))
 
 ax.set_xscale('log')
 ax.set_xlabel('Speed [s]', fontsize=label_fontsize)
-ax.set_ylabel('Density', fontsize=label_fontsize)
+ax.set_ylabel('Count', fontsize=label_fontsize)
 ax.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
 # Custom legend: first for domain (color), then for kappa (linestyle)
-legend1 = ax.legend(handles=domain_handles + kappa_handles, loc='upper right', fontsize=label_fontsize, title_fontsize=label_fontsize, frameon=False)
+legend1 = ax.legend(handles=domain_handles + kappa_handles, bbox_to_anchor=(1, 0.9), loc='upper right', fontsize=label_fontsize, title_fontsize=label_fontsize, frameon=False)
 # legend2 = ax.legend(handles=kappa_handles, loc='upper center', fontsize=label_fontsize, title_fontsize=label_fontsize, frameon=True)
 ax.add_artist(legend1)
+ax.set_xlim(0.065, 1.5)
 
 plt.tight_layout()
-plt.savefig(fname + 'timing_dt_5.png', dpi=300)
+plt.savefig(fname + 'timing_dt_5.pdf', dpi=300)
 
 
 ##############
