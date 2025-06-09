@@ -39,7 +39,7 @@ for k in range(3):
 plt.tight_layout()
 
 cbar = fig.colorbar(pcm, ax=ax.ravel().tolist(), orientation='horizontal', shrink=0.8, pad=0.2)
-cbar.set_label(r'$\left|\Phi^{\mathrm{(Kerr)}}_\phi - \Phi^{\mathrm{(PN5)}}_\phi\right|$', fontsize=14)
+cbar.set_label(r'$\left|\Phi^{\mathrm{FEW}}_\phi - \Phi^{\mathrm{PN5}}_\phi\right|$', fontsize=14)
 cbar.ax.tick_params(labelsize=14)
 plt.savefig("./dephasing_PN_vs_Kerr_masses_w_contours_w_plunge_contours.pdf", bbox_inches="tight")
 plt.show()
