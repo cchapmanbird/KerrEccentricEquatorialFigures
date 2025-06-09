@@ -34,7 +34,7 @@ a_plot = loadeds_shaped[:,:,:,0]*loadeds_shaped[:,:,:,3]
 p_plot = loadeds_shaped[:,:,:,1] - loadeds_shaped[:,:,:,7]
 e_plot = loadeds_shaped[:,:,:,2]
 
-fig = plt.figure(figsize=(5,5), dpi=200)
+fig = plt.figure(figsize=(4.,4.), dpi=200)
 for i, k in enumerate([0, 2, 4, 5]):
     plt.subplot(2, 2, i+1)
 
@@ -42,7 +42,7 @@ for i, k in enumerate([0, 2, 4, 5]):
 
     plt.scatter(1 - a_plot[i,:,:].flatten(), p_plot[i,:,:].flatten(), s=3, c=toplot, vmin=-8, vmax=-2, cmap='plasma', rasterized=True)
 
-    plt.text(0.62, 0.9, rf'$e_\mathrm{{max}}$={e_plot[k, p_plot[k] <= 5].max():.2f}', fontsize=10, transform=plt.gca().transAxes,
+    plt.text(0.52, 0.875, rf'$e_\mathrm{{max}}$={e_plot[k, p_plot[k] <= 5].max():.2f}', fontsize=10, transform=plt.gca().transAxes,
             bbox=dict(facecolor='white', edgecolor='none', boxstyle='round'))
 
     if i == 0 or i == 2:
