@@ -1,5 +1,7 @@
 # KerrEccentricEquatorialFigures
 
+[![DOI](https://zenodo.org/badge/865928412.svg)](https://doi.org/10.5281/zenodo.15631640)
+
 Repository containing Figure production scripts and necessary data products for Chapman-Bird et al. (2025):
 
 ___The Fast and the Frame-Dragging: Efficient waveforms for asymmetric-mass
